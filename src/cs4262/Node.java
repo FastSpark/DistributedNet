@@ -99,7 +99,7 @@ public class Node {
         this.myNodeList = myNodeList;
     }
     
-    
+    // 
     
     public void initialize(){
     //call bs
@@ -117,7 +117,7 @@ public class Node {
     
     }
     
-    public void heartbeat(){
+    public void multicast(String message,ArrayList<String> nodeList){
     //send and listen
     
     }
@@ -126,10 +126,6 @@ public class Node {
     
     
     }
-    
-    
-    
-   
     
     
 }
