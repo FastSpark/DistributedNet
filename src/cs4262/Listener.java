@@ -41,6 +41,14 @@ public class Listener implements Runnable{
                 buffer= new byte[10];
                 packet= new DatagramPacket(buffer, buffer.length);
                 datagramSocket.receive(packet);
+                
+                String message = new String(packet.getData(), 0, packet.getLength());
+                //print  the details of incoming data - client ip : client port - client message
+                System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
+                
+                
+                
+                
                 /* here we need to process the message and call recuired function according to the 
                 message type
                 */
