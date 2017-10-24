@@ -120,20 +120,36 @@ public class Node {
     
     }
     
-    public void findNodeFromBucket(int bucketId){
+    public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException{
+        String message= "FIND_BUCKET_MEMBER "+bucketId;
+        multicast(message,myNodeList);
+    }
     
+    
+    public void findNodeFromBucketReply(int bucketId,Neighbour fromNode) throws UnknownHostException, IOException{
+        String nodeFromBucket=null;
+        if(bucketTable.get(bucketId)!=null){
+            nodeFromBucket= bucketTable.get(bucketId);
+        }
+        unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
     }
     
     public void multicast(String message,ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException{
-            
             DatagramSocket datagramSocket = new DatagramSocket();
             for (Neighbour neighbour : neighboursList) {
-            
                 byte[] buffer = message.getBytes();
                 InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
                 datagramSocket.send(packet);
             }
+    }
+    
+    public void unicast(String message,Neighbour neighbour) throws SocketException, UnknownHostException, IOException{
+            DatagramSocket datagramSocket = new DatagramSocket();
+            byte[] buffer = message.getBytes();
+            InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
+            datagramSocket.send(packet);
     
     }
     //gracefull leave
