@@ -5,6 +5,13 @@
  */
 package cs4262;
 
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Dictionary;
 
@@ -20,9 +27,9 @@ public class Node {
     private String userName;
     private Dictionary<Integer,String> bucketTable;
     private Dictionary<String,ArrayList<String>> fileDictionary;
-    private ArrayList<String> myNodeList;
+    private ArrayList<Neighbour> myNodeList;
 
-    public Node(int myBucketId, String status, String ip, String port, String userName, Dictionary<Integer, String> bucketTable, Dictionary<String, ArrayList<String>> fileDictionary, ArrayList<String> myNodeList) {
+    public Node(int myBucketId, String status, String ip, String port, String userName, Dictionary<Integer, String> bucketTable, Dictionary<String, ArrayList<String>> fileDictionary, ArrayList<Neighbour> myNodeList) {
         this.myBucketId = myBucketId;
         this.status = status;
         this.ip = ip;
@@ -91,11 +98,11 @@ public class Node {
         this.fileDictionary = fileDictionary;
     }
 
-    public ArrayList<String> getMyNodeList() {
+    public ArrayList<Neighbour> getMyNodeList() {
         return myNodeList;
     }
 
-    public void setMyNodeList(ArrayList<String> myNodeList) {
+    public void setMyNodeList(ArrayList<Neighbour> myNodeList) {
         this.myNodeList = myNodeList;
     }
     
@@ -117,8 +124,16 @@ public class Node {
     
     }
     
-    public void multicast(String message,ArrayList<String> nodeList){
-    //send and listen
+    public void multicast(String message,ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException{
+            
+            DatagramSocket datagramSocket = new DatagramSocket();
+            for (Neighbour neighbour : neighboursList) {
+            
+                byte[] buffer = message.getBytes();
+                InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
+                datagramSocket.send(packet);
+            }
     
     }
     //gracefull leave
