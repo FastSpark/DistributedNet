@@ -45,13 +45,26 @@ public class Listener implements Runnable{
                 String message = new String(packet.getData(), 0, packet.getLength());
                 //print  the details of incoming data - client ip : client port - client message
                 System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
-                
-                
-                
-                
-                /* here we need to process the message and call recuired function according to the 
-                message type
-                */
+            
+            /* here we need to process the message and call recuired function according to the
+            message type
+             */
+            String[] messagePart = message.split(" ");
+            switch(messagePart[1]){
+                case "REGOK":  //handle  response from bootstrp
+                   break;
+                case "UNROK" : // handle unregister response
+                   break;
+                case "JOINOK": // join response message
+                   break;
+                case "LEAVEOK": // leave response message
+                   break;
+                case "SEROK" : // search response message
+                   break;
+                case "HEARTBEATOK" : //haddle hearbeat ok    
+                   break;
+            
+            }
         }
     }
     
