@@ -73,8 +73,10 @@ public class Listener implements Runnable {
                 case "HEARTBEATOK": //haddle hearbeat ok    
                     break;
                 case "FBM": //multicast message to find a node from a bucket
+                    this.client.findNodeFromBucketReply(Integer.parseInt(messagePart[2]),new Node(client.getIp(), client.getPort()));
                     break;
                 case "FBMOK": //reply to FBM
+                    this.client.receiveReplyFindNodeFromBucket(message);
                     break;
 
             }

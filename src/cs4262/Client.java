@@ -15,7 +15,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -156,11 +158,11 @@ public class Client {
             System.out.print("Input Next Command : ");
 
             msg = scanner.nextLine();
-            if (msg == "SHOW FILES") {
+            if (msg.equals("DISPLAY FILES")) {
                 displayFiles();
-            } else if (msg == "SHOW TABLE") {
+            } else if (msg.equals("DISPLAY TABLE")) {
                 displayRoutingTable();
-            } else if (msg == "SEARCH FILES") {
+            } else if (msg.equals("SEARCH FILES")) {
                 searchFiles(msg);
             }
         }
@@ -243,11 +245,31 @@ public class Client {
     }
 
     public void displayFiles() {
-        
+        Set<String> keySet = fileDictionary.keySet();
+        System.out.println("Files list in the Node:");
+        for (String string : keySet) {
+            System.out.println("\t" + string);
+        }
     }
 
     public void displayRoutingTable() {
+        if (myNodeList.isEmpty() && bucketTable.isEmpty()) {
+            System.out.println("Tables are empty");
+        } else {
+            System.out.println("Nodes list in the Bucket:");
+            for (Node node : myNodeList) {
+                System.out.println("\t" + node.getIp() + ":" + node.getPort());
+            }
 
+            System.out.println("Nodes list from other Buckets:");
+            Iterator entries = bucketTable.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry entry = (Map.Entry) entries.next();
+                Integer key = (Integer) entry.getKey();
+                Node node = (Node) entry.getValue();
+                System.out.println("Bucket " + key + " : " + node.getIp() + ":" + node.getPort());
+            }
+        }
     }
 
     public void searchFiles(String msg) {
@@ -303,16 +325,17 @@ public class Client {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
-    public void updateRountingTable() throws IOException{
+
+    public void updateRountingTable() throws IOException {
         ArrayList<Node> temNodeList = new ArrayList<Node>();
         for (Node node : myNodeList) {
-            if(timestamp.getTime()-node.getTimeStamp()<5000){
+            if (timestamp.getTime() - node.getTimeStamp() < 5000) {
                 temNodeList.add(node);
             }
         }
-        this.myNodeList=temNodeList;
-        
-        for(int key:bucketTable.keySet()){
+        this.myNodeList = temNodeList;
+
+        for (int key : bucketTable.keySet()) {
 
             Node neighbour = bucketTable.get(key);
             if (timestamp.getTime() - neighbour.getTimeStamp() > 5000) {
@@ -325,7 +348,7 @@ public class Client {
 
     public void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
-        boolean is_Change=false;
+        boolean is_Change = false;
         ArrayList<Node> temNodeList = new ArrayList<Node>();
         String[] splitMessage = message.split(" ");
         String ip = splitMessage[2];
@@ -337,16 +360,16 @@ public class Client {
             }
             temNodeList.add(node);
         }
-        this.myNodeList=temNodeList;
-        
-        if(!is_Change){
-            for(int key:bucketTable.keySet()){
+        this.myNodeList = temNodeList;
+
+        if (!is_Change) {
+            for (int key : bucketTable.keySet()) {
                 Node node = bucketTable.get(key);
-                if(node.getIp().equals(ip)&& node.getPort()==port){
+                if (node.getIp().equals(ip) && node.getPort() == port) {
                     node.setTimeStamp(timestamp.getTime());
-                    bucketTable.replace(key, node);                    
+                    bucketTable.replace(key, node);
                 }
             }
-        }   
-    } 
+        }
+    }
 }
