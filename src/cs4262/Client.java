@@ -201,6 +201,7 @@ public class Client {
 
                 // complete bucketTable
                 for (int i = 0; i < k; i++) {
+                    
                     if (!bucketTable.containsKey(i)) {
 //                        findNodeFromBucket(i);   //handle exceptions
                     }
@@ -217,25 +218,25 @@ public class Client {
                 // change up the "status" to ready (1)
                 break;
         }
-        while (true) {
-            System.out.println("");
-            System.out.print("Input Next Command : ");
-
-            msg = scanner.nextLine();
-            switch (msg) {
-                case "DISPLAY FILES":
-                    displayFiles();
-                    break;
-                case "DISPLAY TABLE":
-                    displayRoutingTable();
-                    break;
-                case "SEARCH FILES":
-                    searchFiles(msg);
-                    break;
-                default:
-                    break;
-            }
-        }
+//        while (true) {
+//            System.out.println("");
+//            System.out.print("Input Next Command : ");
+//
+//            msg = scanner.nextLine();
+//            switch (msg) {
+//                case "DISPLAY FILES":
+//                    displayFiles();
+//                    break;
+//                case "DISPLAY TABLE":
+//                    displayRoutingTable();
+//                    break;
+//                case "SEARCH FILES":
+//                    searchFiles(msg);
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
 
     }
 
@@ -307,16 +308,19 @@ public class Client {
     }
 
     public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
+       
         String[] split_msg = message.split(" ");
         Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
-        this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+        if(this.getBucketTable().get(split_msg[2])!=null){
+                this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+        }
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
         for (Node node : nodesList) {
             byte[] buffer = message.getBytes();
             InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, node.getPort());
             ds.send(packet);
         }
     }
@@ -324,7 +328,7 @@ public class Client {
     public void unicast(String message, Node node) throws SocketException, UnknownHostException, IOException {
         byte[] buffer = message.getBytes();
         InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, node.getPort());
         ds.send(packet);
     }
 
@@ -380,4 +384,13 @@ public class Client {
             }
         }
     }
+    
+    public void sendHeartBeatReply(String message) throws IOException{
+        String newMessage="HEARTBEATOK "+this.getIp()+" "+this.getPort();
+        newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
+        String[] splitMessage = message.split(" ");
+        Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
+        unicast(newMessage, node);    
+    }
+    
 }
