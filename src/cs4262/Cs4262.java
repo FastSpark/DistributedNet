@@ -6,11 +6,13 @@
 package cs4262;
 
 import java.net.Inet4Address;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,7 +21,7 @@ import java.util.logging.Logger;
  * @author nuwantha
  */
 public class Cs4262 {
-    
+
     private static final int k = 3;
 
     /**
@@ -58,15 +60,16 @@ public class Cs4262 {
             };
             //end of final variables
 
+            //start of the input
             String ip = Inet4Address.getLocalHost().getHostAddress();
-            int port = 13547;
+//            int port = 80;
 
-            //start of the listener
-            Thread thread = new Thread(new Listener());
-            thread.start();
-//            Listener listener = new Listener();
-//            listener.run();
-            //end of the listener
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("IP Address : " + ip);
+            System.out.print("Input Port : ");
+            String input = scanner.nextLine();
+            int port = Integer.parseInt(input);
+            //end of the input
 
             //start of creating connection details
             String address = ip + ":" + port;
@@ -97,6 +100,8 @@ public class Cs4262 {
             client.initialize();
 
         } catch (UnknownHostException ex) {
+            Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SocketException ex) {
             Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
