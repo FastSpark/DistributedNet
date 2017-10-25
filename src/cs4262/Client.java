@@ -249,8 +249,10 @@ public class Client {
         }
     }
 
-    private void connectWithInitialNodes() {
-
+    private void connectWithNodes() {
+        // indicate that I'm new to net
+        // send file list with this
+        // that node response with its myNodeList
     }
 
     public void displayFiles() {
