@@ -88,7 +88,7 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            Node node = new Node(myBucketId, ip, port, address, fileDictionary);
+            Client node = new Client(myBucketId, ip, port, address, fileDictionary);
             node.initialize();
 
         } catch (UnknownHostException ex) {

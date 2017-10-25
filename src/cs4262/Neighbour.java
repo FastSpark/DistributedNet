@@ -1,28 +1,25 @@
 package cs4262;
 
-import java.sql.Timestamp;
-
 public class Neighbour{
-	
-        private final String ip;
-	private final int port;
-        private final long timeStamp;
-        
-        public Neighbour(String ip, int port){
-            this.timeStamp =  new Timestamp(System.currentTimeMillis()).getTime();
-            this.ip = ip;
-            this.port = port;
+	private String ip;
+	private int port;
+	private String username;	
+
+	public Neighbour(String ip, int port, String username){
+		this.ip = ip;
+		this.port = port;
+		this.username = username;
 	}	
 
 	public String getIp(){
 		return this.ip;
 	}
 
+	public String getUsername(){
+		return this.username;
+	}
+
 	public int getPort(){
 		return this.port;
 	}
-
-        public long getTimeStamp() {
-            return timeStamp;
-        }
 }
