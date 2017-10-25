@@ -11,7 +11,9 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Dictionary;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Random;
 
 /**
  *
@@ -24,19 +26,42 @@ public class Node {
     private String ip;
     private String port;
     private String userName;
-    private Dictionary<Integer, String> bucketTable;
-    private Dictionary<String, ArrayList<String>> fileDictionary;
+    private Map<Integer, Neighbour> bucketTable;
+    private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Neighbour> myNodeList;
+    private final String[] fileList = {
+        "Adventures of Tintin",
+        "Jack and Jill",
+        "Glee",
+        "The Vampire Diarie",
+        "King Arthur",
+        "Windows XP",
+        "Harry Potter",
+        "Kung Fu Panda",
+        "Lady Gaga",
+        "Twilight",
+        "Windows 8",
+        "Mission Impossible",
+        "Turn Up The Music",
+        "Super Mario",
+        "American Pickers",
+        "Microsoft Office 2010",
+        "Happy Feet",
+        "Modern Family",
+        "American Idol",
+        "Hacking for Dummies"
+    };
 
-    public Node(int myBucketId, String status, String ip, String port, String userName, Dictionary<Integer, String> bucketTable, Dictionary<String, ArrayList<String>> fileDictionary, ArrayList<Neighbour> myNodeList) {
+    public Node(int myBucketId, String status, String ip, String port) {
+
         this.myBucketId = myBucketId;
         this.status = status;
         this.ip = ip;
         this.port = port;
-        this.userName = userName;
-        this.bucketTable = bucketTable;
-        this.fileDictionary = fileDictionary;
-        this.myNodeList = myNodeList;
+        this.userName = ip + ":" + port;
+        this.bucketTable = new HashMap<>();
+        this.fileDictionary = new HashMap<>();
+        this.myNodeList = new ArrayList<>();
     }
 
     public int getMyBucketId() {
@@ -79,19 +104,19 @@ public class Node {
         this.userName = userName;
     }
 
-    public Dictionary<Integer, String> getBucketTable() {
+    public Map<Integer, Neighbour> getBucketTable() {
         return bucketTable;
     }
 
-    public void setBucketTable(Dictionary<Integer, String> bucketTable) {
+    public void setBucketTable(Map<Integer, Neighbour> bucketTable) {
         this.bucketTable = bucketTable;
     }
 
-    public Dictionary<String, ArrayList<String>> getFileDictionary() {
+    public Map<String, ArrayList<String>> getFileDictionary() {
         return fileDictionary;
     }
 
-    public void setFileDictionary(Dictionary<String, ArrayList<String>> fileDictionary) {
+    public void setFileDictionary(Map<String, ArrayList<String>> fileDictionary) {
         this.fileDictionary = fileDictionary;
     }
 
@@ -102,18 +127,83 @@ public class Node {
     public void setMyNodeList(ArrayList<Neighbour> myNodeList) {
         this.myNodeList = myNodeList;
     }
+    
+    public void sendMessage(String msg){
+        System.out.println("Sending message: " + msg);
+        
+    }
 
-    // 
     public void initialize() {
-        //call bs
-        //join bs
-        //
+        // initialize files (3 to 5)
+        int randomFileCount = new Random().nextInt(3) + 3;
+        System.out.println("Initializing node with " + randomFileCount + " files...");
+        
+        for (int i = 0; i < randomFileCount ; i++) {
+            int randomIndex = new Random().nextInt(fileList.length);
+            String selectedFile = fileList[randomIndex];
+            
+            ArrayList<String> nodesContainingFile = fileDictionary.get(selectedFile);
+            if(nodesContainingFile == null){
+                nodesContainingFile = new ArrayList<>();
+                nodesContainingFile.add(this.userName);
+            } else {
+                nodesContainingFile.add(this.userName);
+            }
+        }
+        
+        // Register With Bootstrap Server
+        String msg = " REG " + this.ip + " " + this.port + " " + this.userName;
+        msg = "00" + Integer.toString(msg.length()) + msg;
+        sendMessage(msg);
+    }
+    
+    // handles REGOK responses from BS
+    // length REGOK no_nodes IP_1 port_1 IP_2 port_2
+    public void handleRegisterResponse(String msg){
+        String[] arr = msg.split(" ");
+        
+        // validate msg
+        if (!arr[1].equals("REGOK")){return;}
+        
+        switch (arr[2]){
+            case "0":
+                break;
+            case "1":
+                
+                break;
+            case "2":
+                break;
+            case "9999":
+                System.out.println("failed, there is some error in the command");
+                break;
+            case "9998":
+                System.out.println("failed, already registered! attempting unregister first");
+                break;
+            case "9997":
+                System.out.println("failed, registered to another user, try a different IP and port");
+                // TODO
+                break;
+            case "9996":
+                System.out.println("failed, can�t register. BS full.");
+            default:
+                // get the first 2 nodes' details
+                break;
+        }
+        
+    }
+    
+    private void connectWithInitialNodes(){
+        
+    }
+
+    public void displayFiles() {
 
     }
 
-    public void fileSearch(String fileName) {
+    public void displayRoutingTable() {
 
     }
+
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         String message = "FIND_BUCKET_MEMBER " + bucketId;
@@ -123,7 +213,7 @@ public class Node {
     public void findNodeFromBucketReply(int bucketId, Neighbour fromNode) throws UnknownHostException, IOException {
         String nodeFromBucket = null;
         if (bucketTable.get(bucketId) != null) {
-            nodeFromBucket = bucketTable.get(bucketId);
+          //  nodeFromBucket = bucketTable.get(bucketId);
         }
         unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
     }

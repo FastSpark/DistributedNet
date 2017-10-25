@@ -3,7 +3,7 @@ package cs4262;
 import java.sql.Timestamp;
 
 
-class Neighbour{
+public class Neighbour{
 	
         private String ip;
 	private int port;
