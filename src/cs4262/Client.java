@@ -32,8 +32,9 @@ public class Client {
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
+    private final DatagramSocket ds;
 
-    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) {
+    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -44,6 +45,10 @@ public class Client {
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
 
+        this.ds = new DatagramSocket(port);
+        
+        Thread thread = new Thread(new Listener(ds));
+        thread.start();
     }
 
     Client() {
@@ -119,10 +124,7 @@ public class Client {
             System.out.println("Sending message: " + msg);
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
-            DatagramSocket ds = new DatagramSocket(13546);
             ds.send(dp);
-            
-            
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SocketException ex) {
