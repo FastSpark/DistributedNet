@@ -2,47 +2,27 @@ package cs4262;
 
 import java.sql.Timestamp;
 
-public class Neighbour {
+public class Neighbour{
+	
+        private final String ip;
+	private final int port;
+        private final long timeStamp;
+        
+        public Neighbour(String ip, int port){
+            this.timeStamp =  new Timestamp(System.currentTimeMillis()).getTime();
+            this.ip = ip;
+            this.port = port;
+	}	
 
-    private String ip;
-    private int port;
-    private String username;
-    private long timeStamp;
-    Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+	public String getIp(){
+		return this.ip;
+	}
 
-    public Neighbour(String ip, int port, String username) {
-        this.timestamp.getTime();
-        this.ip = ip;
-        this.port = port;
-        this.username = username;
-    }
+	public int getPort(){
+		return this.port;
+	}
 
-    public String getIp() {
-        return this.ip;
-    }
-
-    public String getUsername() {
-        return this.username;
-    }
-
-    public int getPort() {
-        return this.port;
-    }
-
-    public long getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(long timeStamp) {
-        this.timeStamp = timeStamp;
-    }
-
-    public Timestamp getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(Timestamp timestamp) {
-        this.timestamp = timestamp;
-    }
-
+        public long getTimeStamp() {
+            return timeStamp;
+        }
 }

@@ -111,6 +111,12 @@ public class Node {
         this.myNodeList = myNodeList;
     }
 
+    public void sendMessage(String msg) {
+        System.out.println("Sending message: " + msg);
+
+    }
+
+
     public void initialize() {
         // Register With Bootstrap Server
         String msg = " REG " + this.ip + " " + this.port + " " + this.userName;
@@ -137,10 +143,14 @@ public class Node {
 
         switch (arr[2]) {
             case "0":
+                System.out.println("You are the first node, registered successfully with BS!");
                 break;
             case "1":
+                addToMyNodeList(arr[3], arr[4]);
                 break;
             case "2":
+                addToMyNodeList(arr[3], arr[4]);
+                addToMyNodeList(arr[5], arr[6]);
                 break;
             case "9999":
                 System.out.println("failed, there is some error in the command");
@@ -155,14 +165,20 @@ public class Node {
             case "9996":
                 System.out.println("failed, can't register. BS full.");
             default:
-                // get the first 2 nodes' details
+                // get the FIRST 2 nodes' details
+                addToMyNodeList(arr[3], arr[4]);
+                addToMyNodeList(arr[5], arr[6]);              
                 break;
         }
 
     }
-
-    private void connectWithInitialNodes() {
-
+    
+    private void addToMyNodeList(String ip, String port){
+        myNodeList.add(new Neighbour(ip, Integer.parseInt(port)));
+    }
+    
+    private void connectWithInitialNodes(){
+        
     }
 
     public void displayFiles() {
