@@ -9,7 +9,6 @@ class Neighbour{
 	private int port;
 	private String username;
         private long timeStamp;
-        
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         
         public Neighbour(String ip, int port, String username){

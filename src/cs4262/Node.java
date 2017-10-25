@@ -4,11 +4,9 @@
  * and open the template in the editor.
  */
 package cs4262;
-
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -40,8 +38,6 @@ public class Node {
         this.myNodeList = myNodeList;
     }
 
-    
-    
     public int getMyBucketId() {
         return myBucketId;
     }
@@ -135,22 +131,21 @@ public class Node {
     }
     
     public void multicast(String message,ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException{
-            DatagramSocket datagramSocket = new DatagramSocket();
-            for (Neighbour neighbour : neighboursList) {
-                byte[] buffer = message.getBytes();
-                InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
-                datagramSocket.send(packet);
-            }
-    }
-    
-    public void unicast(String message,Neighbour neighbour) throws SocketException, UnknownHostException, IOException{
-            DatagramSocket datagramSocket = new DatagramSocket();
+        DatagramSocket datagramSocket = new DatagramSocket();
+        for (Neighbour neighbour : neighboursList) {
             byte[] buffer = message.getBytes();
             InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
             datagramSocket.send(packet);
+        }
+    }
     
+    public void unicast(String message,Neighbour neighbour) throws SocketException, UnknownHostException, IOException{
+        DatagramSocket datagramSocket = new DatagramSocket();
+        byte[] buffer = message.getBytes();
+        InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
+        datagramSocket.send(packet);
     }
     //gracefull leave
     public void leave(){

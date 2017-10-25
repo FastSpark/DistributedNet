@@ -16,7 +16,10 @@ public class Cs4262 {
      */
     public static void main(String[] args) {
         System.out.println("started");
+        
+        //need to haddle 
         //start new listener
+        //call initializer
         
     }
     
