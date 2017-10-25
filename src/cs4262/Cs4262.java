@@ -19,6 +19,8 @@ import java.util.logging.Logger;
  * @author nuwantha
  */
 public class Cs4262 {
+    
+    private static final int k = 3;
 
     /**
      * @param args the command line arguments
@@ -31,8 +33,7 @@ public class Cs4262 {
         try {
             System.out.println("Main Thread Started");
 
-            //start of final variables
-            final int k = 3;
+            //start of final variables         
             final String[] fileList = {
                 "Adventures of Tintin",
                 "Jack and Jill",
@@ -92,7 +93,7 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            Client client = new Client(myBucketId, ip, port, address, fileDictionary);
+            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary);
             client.initialize();
 
         } catch (UnknownHostException ex) {

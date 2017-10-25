@@ -79,7 +79,7 @@ public class BootstrapServer {
                     }
 
                     reply = String.format("%04d", reply.length() + 5) + " " + reply;
-
+                    echo(incoming.getPort()+"");
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                     sock.send(dpReply);
                 } else if (command.equals("UNREG")) {
