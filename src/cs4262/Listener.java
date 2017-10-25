@@ -43,7 +43,7 @@ public class Listener implements Runnable {
         DatagramPacket packet;
         // Simply making Server run continously.
         while (true) {
-            buffer = new byte[65536];
+            buffer = new byte[125536];
             packet = new DatagramPacket(buffer, buffer.length);
             datagramSocket.receive(packet);
 

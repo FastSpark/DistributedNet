@@ -20,6 +20,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -154,13 +156,12 @@ public class Client {
         msg = "00" + Integer.toString(msg.length()) + msg;
 
         sendMessage(msg);
-
-
+        
     }
 
     // handles REGOK responses from BS
     // length REGOK no_nodes IP_1 port_1 IP_2 port_2
-    public void handleRegisterResponse(String msg) {
+    public void handleRegisterResponse(String msg) throws IOException {
         String[] arr = msg.split(" ");
 
         // validate msg
@@ -238,6 +239,8 @@ public class Client {
 //            }
 //        }
 
+        connectWithNodes();
+
     }
 
     private void storeNode(String ip, String port) {
@@ -250,8 +253,14 @@ public class Client {
         }
     }
 
-    private void connectWithInitialNodes() {
-
+    private void connectWithNodes() {
+        // indicate that I'm new to net
+        // send file list with this
+        // that node response with its myNodeList
+    }
+    
+    public void connectWithNodesResponse(){
+        
     }
 
     public void displayFiles() {
@@ -281,10 +290,62 @@ public class Client {
         }
     }
 
-    public void searchFiles(String msg) {
-        //length SER IP port file_name hops
+    public void initializeSearch(String msg) throws IOException{
+        //SEARCH_FILES file_name
+        String file_name= msg.split(" ")[1];
+        String result_string="";
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile(".*\\\\b"+file_name+"\\\\b.*");
+        Set<String> keys = fileDictionary.keySet();
+        Iterator<String> iterator = keys.iterator();
 
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                result_string.concat(candidate+" ");
+            }
+        }
+        System.out.println(result_string); 
+        
+        /////////
+        String net_message="SER "+this.getIp()+" "+this.getPort()+" "+msg.split(" ")[1]+" 1";
+        net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
+        searchFiles(net_message);
     }
+    
+    public void searchFiles(String message) throws UnknownHostException, IOException {
+        //length SER IP port file_name hops
+        String[] split = message.split(" ");
+        String file_name= split[4];
+        String result_string="";
+        
+        int hop_count=0;
+        if(split.length==6) 
+            hop_count=Integer.valueOf(split[5]);
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
+        Set<String> keys = fileDictionary.keySet();
+        Iterator<String> iterator = keys.iterator();
+
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                result_string.concat(candidate+" ");
+            }
+        }
+        
+        String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
+        ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
+        unicast(ret_message, new Node(split[2], Integer.parseInt(split[3])));
+    }   
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         //FBM: Find Bucket Member 0011 FBM 01
