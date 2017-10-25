@@ -17,27 +17,27 @@ import java.util.logging.Logger;
  */
 public class Listener implements Runnable {
 
-    DatagramSocket dgSocket;
+    Client client;
 
-    Listener(DatagramSocket ds) {
-        this.dgSocket = ds;
+    Listener(Client client) {
+        this.client = client;
     }
 
     @Override
     public void run() {
         try {
-            listen(this.dgSocket); //To change body of generated methods, choose Tools | Templates.
+            listen(this.client); //To change body of generated methods, choose Tools | Templates.
         } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void listen(DatagramSocket ds) throws IOException, ClassNotFoundException {
+    public void listen(Client client) throws IOException, ClassNotFoundException {
         // Port number to bind server to.
-        int portNum = ds.getPort();
+        int portNum = client.getPort();
 
         // Socket for server to listen at.
-        DatagramSocket datagramSocket = ds;
+        DatagramSocket datagramSocket = client.getDatagramSocket();
         System.out.println("Now listening to port: " + portNum);
         byte[] buffer;
         DatagramPacket packet;
@@ -57,8 +57,8 @@ public class Listener implements Runnable {
              */
             String[] messagePart = message.split(" ");
             switch (messagePart[1]) {
-                case "REGOK": 
-                    System.out.println(message);    
+                case "REGOK":
+                    System.out.println(message);
                     //handle  response from bootstrp
                     break;
                 case "UNROK": // handle unregister response

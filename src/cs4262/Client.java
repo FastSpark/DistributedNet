@@ -34,9 +34,9 @@ public class Client {
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
     private Timestamp timestamp;
-    private final DatagramSocket ds;
+    private DatagramSocket ds;
 
-    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) throws SocketException {
+    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -46,12 +46,16 @@ public class Client {
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
-        this.timestamp=new Timestamp(System.currentTimeMillis());
-        
-        this.ds = new DatagramSocket(port);
-        
-        Thread thread = new Thread(new Listener(ds));
-        thread.start();
+        this.timestamp = new Timestamp(System.currentTimeMillis());
+        this.ds = datagramSocket;
+    }
+
+    public DatagramSocket getDatagramSocket() {
+        return ds;
+    }
+
+    public void setDatagramSocket(DatagramSocket ds) {
+        this.ds = ds;
     }
 
     Client() {
@@ -218,7 +222,7 @@ public class Client {
     }
 
     private void connectWithInitialNodes() {
-        
+
     }
 
     public void displayFiles() {
@@ -228,37 +232,36 @@ public class Client {
     public void displayRoutingTable() {
 
     }
-    
-    public void searchFiles(){
+
+    public void searchFiles() {
         //length SER IP port file_name hops
-        
+
     }
 
-    
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         //FBM: Find Bucket Member 0011 FBM 01
         String message = "FBM " + bucketId;
-        message= String.format("%04d", message.length() + 5) + " " + message;
+        message = String.format("%04d", message.length() + 5) + " " + message;
         multicast(message, myNodeList);
     }
 
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
         //FBMOK: Find Bucket Member OK
         Node nodeFromBucket = null;
-        String message=null;
+        String message = null;
         if (bucketTable.get(bucketId) != null) {
             nodeFromBucket = bucketTable.get(bucketId);
-            message = "FBMOK " +bucketId +""+ nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
-        }else{
-            message = "FBMOK "+bucketId+" null null";
+            message = "FBMOK " + bucketId + "" + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
+        } else {
+            message = "FBMOK " + bucketId + " null null";
         }
-        message= String.format("%04d", message.length() + 5) + " " + message;
+        message = String.format("%04d", message.length() + 5) + " " + message;
         unicast(message, fromNode);
     }
-    
+
     public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
-        String[] split_msg = message.split(" ");        
-        Node bucket_node= new Node(split_msg[3], Integer.valueOf(split_msg[4]));
+        String[] split_msg = message.split(" ");
+        Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
         this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
     }
 
@@ -285,52 +288,52 @@ public class Client {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
-    public void updateRountingTable() throws IOException{
+
+    public void updateRountingTable() throws IOException {
         ArrayList<Node> temNeighboursList = new ArrayList<Node>();
         for (Node neighbour : myNodeList) {
-            if(timestamp.getTime()-neighbour.getTimeStamp()<5000){
+            if (timestamp.getTime() - neighbour.getTimeStamp() < 5000) {
                 temNeighboursList.add(neighbour);
             }
         }
-        this.myNodeList=temNeighboursList;
-        
-        for(int key:bucketTable.keySet()){
+        this.myNodeList = temNeighboursList;
+
+        for (int key : bucketTable.keySet()) {
             Node neighbour = bucketTable.get(key);
-            if(timestamp.getTime()-neighbour.getTimeStamp()>5000){
+            if (timestamp.getTime() - neighbour.getTimeStamp() > 5000) {
                 bucketTable.remove(key);
                 this.findNodeFromBucket(key);
             }
         }
-        
+
     }
-    
-    public void handleHeartBeatResponse(String message){
+
+    public void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
-        boolean is_Change=false;
+        boolean is_Change = false;
         ArrayList<Node> temNeighboursList = new ArrayList<Node>();
         String[] splitMessage = message.split(" ");
         String ip = splitMessage[2];
-        int port= Integer.parseInt(splitMessage[3]);
+        int port = Integer.parseInt(splitMessage[3]);
         for (Node node : myNodeList) {
-            if(node.getIp().equals(ip)&& node.getPort()==port){
+            if (node.getIp().equals(ip) && node.getPort() == port) {
                 node.setTimeStamp(timestamp.getTime());
-                is_Change=true;
+                is_Change = true;
             }
             temNeighboursList.add(node);
         }
-        this.myNodeList=temNeighboursList;
-        
-        if(!is_Change){
-            for(int key:bucketTable.keySet()){
+        this.myNodeList = temNeighboursList;
+
+        if (!is_Change) {
+            for (int key : bucketTable.keySet()) {
                 Node neighbour = bucketTable.get(key);
-                if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
+                if (neighbour.getIp().equals(ip) && neighbour.getPort() == port) {
                     neighbour.setTimeStamp(timestamp.getTime());
-                    bucketTable.replace(key, neighbour);                    
+                    bucketTable.replace(key, neighbour);
                 }
             }
         }
-        
+
     }
 
-    
 }

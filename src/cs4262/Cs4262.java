@@ -5,6 +5,7 @@
  */
 package cs4262;
 
+import java.net.DatagramSocket;
 import java.net.Inet4Address;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -96,8 +97,13 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary);
+            DatagramSocket ds = new DatagramSocket(port);
+
+            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, ds);
             client.initialize();
+
+            Thread thread = new Thread(new Listener(client));
+            thread.start();
 
         } catch (UnknownHostException ex) {
             Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
