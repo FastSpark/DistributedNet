@@ -218,6 +218,9 @@ public class Client {
                 // change up the "status" to ready (1)
                 break;
         }
+        
+        connectWithNodes();
+        
         //while (true) {
         displayFiles();
         System.out.println("");
@@ -257,6 +260,10 @@ public class Client {
         // indicate that I'm new to net
         // send file list with this
         // that node response with its myNodeList
+    }
+    
+    public void connectWithNodesResponse(){
+        
     }
 
     public void displayFiles() {
