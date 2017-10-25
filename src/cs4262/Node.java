@@ -7,7 +7,6 @@ public class Node{
         private final String ip;
 	private final int port;
         private long timeStamp;
-        
         public Node(String ip, int port){
             this.timeStamp =  new Timestamp(System.currentTimeMillis()).getTime();
             this.ip = ip;

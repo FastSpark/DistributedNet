@@ -263,21 +263,19 @@ public class Client {
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
-        DatagramSocket datagramSocket = new DatagramSocket();
         for (Node node : nodesList) {
             byte[] buffer = message.getBytes();
             InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
-            datagramSocket.send(packet);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+            ds.send(packet);
         }
     }
 
     public void unicast(String message, Node node) throws SocketException, UnknownHostException, IOException {
-        DatagramSocket datagramSocket = new DatagramSocket();
         byte[] buffer = message.getBytes();
         InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
-        datagramSocket.send(packet);
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+        ds.send(packet);
     }
 
     //gracefull leave
@@ -286,13 +284,13 @@ public class Client {
         multicast(message, myNodeList);
     }
     public void updateRountingTable() throws IOException{
-        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
-        for (Node neighbour : myNodeList) {
-            if(timestamp.getTime()-neighbour.getTimeStamp()<5000){
-                temNeighboursList.add(neighbour);
+        ArrayList<Node> temNodeList = new ArrayList<Node>();
+        for (Node node : myNodeList) {
+            if(timestamp.getTime()-node.getTimeStamp()<5000){
+                temNodeList.add(node);
             }
         }
-        this.myNodeList=temNeighboursList;
+        this.myNodeList=temNodeList;
         
         for(int key:bucketTable.keySet()){
             Node neighbour = bucketTable.get(key);
@@ -307,7 +305,7 @@ public class Client {
     public void handleHeartBeatResponse(String message){
         //length HEARTBEATOK IP_address port_no
         boolean is_Change=false;
-        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
+        ArrayList<Node> temNodeList = new ArrayList<Node>();
         String[] splitMessage = message.split(" ");
         String ip = splitMessage[2];
         int port= Integer.parseInt(splitMessage[3]);
@@ -316,21 +314,18 @@ public class Client {
                 node.setTimeStamp(timestamp.getTime());
                 is_Change=true;
             }
-            temNeighboursList.add(node);
+            temNodeList.add(node);
         }
-        this.myNodeList=temNeighboursList;
+        this.myNodeList=temNodeList;
         
         if(!is_Change){
             for(int key:bucketTable.keySet()){
-                Node neighbour = bucketTable.get(key);
-                if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
-                    neighbour.setTimeStamp(timestamp.getTime());
-                    bucketTable.replace(key, neighbour);                    
+                Node node = bucketTable.get(key);
+                if(node.getIp().equals(ip)&& node.getPort()==port){
+                    node.setTimeStamp(timestamp.getTime());
+                    bucketTable.replace(key, node);                    
                 }
             }
-        }
-        
-    }
-
-    
+        }   
+    } 
 }
