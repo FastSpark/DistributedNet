@@ -155,19 +155,7 @@ public class Client {
 
         sendMessage(msg);
 
-        while (true) {
-            System.out.println("");
-            System.out.print("Input Next Command : ");
 
-            msg = scanner.nextLine();
-            if (msg.equals("DISPLAY FILES")) {
-                displayFiles();
-            } else if (msg.equals("DISPLAY TABLE")) {
-                displayRoutingTable();
-            } else if (msg.equals("SEARCH FILES")) {
-                searchFiles(msg);
-            }
-        }
     }
 
     // handles REGOK responses from BS
@@ -228,6 +216,25 @@ public class Client {
 
                 // change up the "status" to ready (1)
                 break;
+        }
+        while (true) {
+            System.out.println("");
+            System.out.print("Input Next Command : ");
+
+            msg = scanner.nextLine();
+            switch (msg) {
+                case "DISPLAY FILES":
+                    displayFiles();
+                    break;
+                case "DISPLAY TABLE":
+                    displayRoutingTable();
+                    break;
+                case "SEARCH FILES":
+                    searchFiles(msg);
+                    break;
+                default:
+                    break;
+            }
         }
 
     }
