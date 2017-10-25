@@ -64,6 +64,10 @@ public class Listener implements Runnable {
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok    
                     break;
+                case "FBM": //multicast message to find a node from a bucket
+                    break;
+                case "FBMOK": //reply to FBM
+                    break;
 
             }
         }
