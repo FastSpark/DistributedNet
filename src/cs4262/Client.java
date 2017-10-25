@@ -30,8 +30,8 @@ public class Client {
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
 
-    public Client(int myBucketId, String ip, String port, String username, Map<String, ArrayList<String>> fileDictionary) {
-        this.k = 3; // get from main
+    public Client(int k, int myBucketId, String ip, String port, String username, Map<String, ArrayList<String>> fileDictionary) {
+        this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
         this.ip = ip;
