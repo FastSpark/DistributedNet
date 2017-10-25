@@ -11,6 +11,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ public class Client {
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
+    private Timestamp timestamp;
     private final DatagramSocket ds;
 
     public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) throws SocketException {
@@ -44,7 +46,7 @@ public class Client {
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
-
+        this.timestamp=new Timestamp(System.currentTimeMillis());
         this.ds = new DatagramSocket(port);
         
         Thread thread = new Thread(new Listener(ds));
@@ -124,6 +126,8 @@ public class Client {
             System.out.println("Sending message: " + msg);
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
+            DatagramSocket ds = new DatagramSocket(13548);
+            ds.send(dp);            
             ds.send(dp);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
@@ -215,7 +219,7 @@ public class Client {
     }
 
     private void connectWithInitialNodes() {
-
+        
     }
 
     public void displayFiles() {
@@ -225,18 +229,35 @@ public class Client {
     public void displayRoutingTable() {
 
     }
+    
+    public void searchFiles(){
+        //length SER IP port file_name hops
+        
+    }
 
+    
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
-        String message = "FIND_BUCKET_MEMBER " + bucketId;
+        //FBM: Find Bucket Member 0011 FBM 01
+        String message = "0011 FBM " + bucketId;
         multicast(message, myNodeList);
     }
 
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
-        String nodeFromBucket = null;
+        //FBMOK: Find Bucket Member OK
+        Node nodeFromBucket = null;
         if (bucketTable.get(bucketId) != null) {
-            //  nodeFromBucket = bucketTable.get(bucketId);
+            nodeFromBucket = bucketTable.get(bucketId);
+            unicast("FBMOK " +bucketId +""+ nodeFromBucket.getIp() + " " + nodeFromBucket.getPort(), fromNode);
+        }else{
+            unicast("FBMOK "+bucketId+" null null", fromNode);
         }
-        unicast("FOUND_BUCKET_MEMBER " + nodeFromBucket + " " + this.getIp() + " " + this.getPort(), fromNode);
+        
+    }
+    
+    public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
+        String[] split_msg = message.split(" ");        
+        Node bucket_node= new Node(split_msg[2], Integer.valueOf(split_msg[3]));
+        this.bucketTable.put(Integer.valueOf(split_msg[1]), bucket_node);
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
@@ -262,4 +283,52 @@ public class Client {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
+    public void updateRountingTable() throws IOException{
+        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
+        for (Node neighbour : myNodeList) {
+            if(timestamp.getTime()-neighbour.getTimeStamp()<5000){
+                temNeighboursList.add(neighbour);
+            }
+        }
+        this.myNodeList=temNeighboursList;
+        
+        for(int key:bucketTable.keySet()){
+            Node neighbour = bucketTable.get(key);
+            if(timestamp.getTime()-neighbour.getTimeStamp()>5000){
+                bucketTable.remove(key);
+                this.findNodeFromBucket(key);
+            }
+        }
+        
+    }
+    
+    public void handleHeartBeatResponse(String message){
+        //length HEARTBEATOK IP_address port_no
+        boolean is_Change=false;
+        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
+        String[] splitMessage = message.split(" ");
+        String ip = splitMessage[2];
+        int port= Integer.parseInt(splitMessage[3]);
+        for (Node node : myNodeList) {
+            if(node.getIp().equals(ip)&& node.getPort()==port){
+                node.setTimeStamp(timestamp.getTime());
+                is_Change=true;
+            }
+            temNeighboursList.add(node);
+        }
+        this.myNodeList=temNeighboursList;
+        
+        if(!is_Change){
+            for(int key:bucketTable.keySet()){
+                Node neighbour = bucketTable.get(key);
+                if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
+                    neighbour.setTimeStamp(timestamp.getTime());
+                    bucketTable.replace(key, neighbour);                    
+                }
+            }
+        }
+        
+    }
+
+    
 }

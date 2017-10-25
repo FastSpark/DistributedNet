@@ -57,7 +57,9 @@ public class Listener implements Runnable {
              */
             String[] messagePart = message.split(" ");
             switch (messagePart[1]) {
-                case "REGOK":  //handle  response from bootstrp
+                case "REGOK": 
+                    System.out.println(message);    
+                    //handle  response from bootstrp
                     break;
                 case "UNROK": // handle unregister response
                     break;
@@ -68,6 +70,10 @@ public class Listener implements Runnable {
                 case "SEROK": // search response message
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok    
+                    break;
+                case "FBM": //multicast message to find a node from a bucket
+                    break;
+                case "FBMOK": //reply to FBM
                     break;
 
             }
