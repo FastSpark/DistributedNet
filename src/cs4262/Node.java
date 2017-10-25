@@ -4,7 +4,12 @@
  * and open the template in the editor.
  */
 package cs4262;
-
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -48,6 +53,7 @@ public class Node {
     };
 
     public Node(int myBucketId, String status, String ip, String port) {
+
         this.myBucketId = myBucketId;
         this.status = status;
         this.ip = ip;
@@ -114,11 +120,11 @@ public class Node {
         this.fileDictionary = fileDictionary;
     }
 
-    public ArrayList<String> getMyNodeList() {
+    public ArrayList<Neighbour> getMyNodeList() {
         return myNodeList;
     }
 
-    public void setMyNodeList(ArrayList<String> myNodeList) {
+    public void setMyNodeList(ArrayList<Neighbour> myNodeList) {
         this.myNodeList = myNodeList;
     }
     
@@ -178,7 +184,7 @@ public class Node {
                 // TODO
                 break;
             case "9996":
-                System.out.println("failed, can’t register. BS full.");
+                System.out.println("failed, canï¿½t register. BS full.");
             default:
                 // get the first 2 nodes' details
                 break;
@@ -190,24 +196,6 @@ public class Node {
         
     }
 
-    public void fileSearch(String fileName) {
-
-    }
-
-    public void findNodeFromBucket(int bucketId) {
-
-    }
-
-    public void multicast(String message, ArrayList<String> nodeList) {
-        //send and listen
-
-    }
-
-    //gracefull leave
-    public void leave() {
-
-    }
-
     public void displayFiles() {
 
     }
@@ -216,4 +204,41 @@ public class Node {
 
     }
 
+
+    public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
+        String message = "FIND_BUCKET_MEMBER " + bucketId;
+        multicast(message, myNodeList);
+    }
+
+    public void findNodeFromBucketReply(int bucketId, Neighbour fromNode) throws UnknownHostException, IOException {
+        String nodeFromBucket = null;
+        if (bucketTable.get(bucketId) != null) {
+            nodeFromBucket = bucketTable.get(bucketId);
+        }
+        unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
+    }
+    
+    public void multicast(String message,ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException{
+        DatagramSocket datagramSocket = new DatagramSocket();
+        for (Neighbour neighbour : neighboursList) {
+            byte[] buffer = message.getBytes();
+            InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
+            datagramSocket.send(packet);
+        }
+    }
+    
+    public void unicast(String message,Neighbour neighbour) throws SocketException, UnknownHostException, IOException{
+        DatagramSocket datagramSocket = new DatagramSocket();
+        byte[] buffer = message.getBytes();
+        InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
+        datagramSocket.send(packet);
+    }
+
+    //gracefull leave
+    public void leave(int bucketId) throws IOException {
+        String message = "LEAVING BUCKET " + bucketId;
+        multicast(message, myNodeList);
+    }
 }

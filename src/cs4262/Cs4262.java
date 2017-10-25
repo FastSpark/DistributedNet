@@ -15,6 +15,11 @@ public class Cs4262 {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+        System.out.println("started");
+        
+        //need to haddle 
+        //start new listener
+        //call initializer
         
     }
     
