@@ -6,9 +6,9 @@ Bootstrap server is the server that help in initializing the network.
 Client is the individual components in the network. (Node is its simplified version that is used for communication.)
 
 For each node, with commands 
-	DISPLAY_FILES
-	DISPALY_TABLE
-	SEARCH_FILES file_name
+	* DISPLAY_FILES
+	* DISPALY_TABLE
+	* SEARCH_FILES file_name
 you can get the required details.
 
 ## To run
