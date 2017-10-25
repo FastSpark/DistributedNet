@@ -47,6 +47,7 @@ public class Client {
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
         this.timestamp=new Timestamp(System.currentTimeMillis());
+        
         this.ds = new DatagramSocket(port);
         
         Thread thread = new Thread(new Listener(ds));
@@ -126,8 +127,6 @@ public class Client {
             System.out.println("Sending message: " + msg);
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
-            DatagramSocket ds = new DatagramSocket(13548);
-            ds.send(dp);            
             ds.send(dp);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
