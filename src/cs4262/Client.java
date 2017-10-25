@@ -37,12 +37,13 @@ public class Client {
     private String userName;
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
+    private ArrayList<String> myFileList;
     private ArrayList<Node> myNodeList;
     private Timestamp timestamp;
     private DatagramSocket ds;
     Scanner scanner = new Scanner(System.in);
 
-    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, DatagramSocket datagramSocket) throws SocketException {
+    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -51,6 +52,7 @@ public class Client {
         this.userName = username;
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
+        this.myFileList = myFileList;
         this.myNodeList = new ArrayList<>();
         this.timestamp = new Timestamp(System.currentTimeMillis());
         this.ds = datagramSocket;
@@ -154,29 +156,12 @@ public class Client {
         msg = "00" + Integer.toString(msg.length()) + msg;
 
         sendMessage(msg);
-
-        while (true) {
-            System.out.println("");
-            System.out.print("Input Next Command : ");
-
-            msg = scanner.nextLine();
-            if (msg == "SHOW FILES") {
-                displayFiles();
-            } else if (msg == "SHOW TABLE") {
-                displayRoutingTable();
-            } else if (msg == "SEARCH FILES") {
-                try {
-                    searchFiles(msg);
-                } catch (IOException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }
+        
     }
 
     // handles REGOK responses from BS
     // length REGOK no_nodes IP_1 port_1 IP_2 port_2
-    public void handleRegisterResponse(String msg) {
+    public void handleRegisterResponse(String msg) throws IOException {
         String[] arr = msg.split(" ");
 
         // validate msg
@@ -233,6 +218,26 @@ public class Client {
                 // change up the "status" to ready (1)
                 break;
         }
+        while (true) {
+            System.out.println("");
+            System.out.print("Input Next Command : ");
+
+            msg = scanner.nextLine();
+            switch (msg) {
+                case "DISPLAY FILES":
+                    displayFiles();
+                    break;
+                case "DISPLAY TABLE":
+                    displayRoutingTable();
+                    break;
+                case "SEARCH FILES":
+                    searchFiles(msg);
+                    break;
+                default:
+                    break;
+                  
+            }
+        }
 
     }
 
@@ -251,11 +256,30 @@ public class Client {
     }
 
     public void displayFiles() {
-        
+        System.out.println("Files in ");
+        this.myFileList.forEach((file) -> {
+            System.out.println(file);
+        });
     }
 
     public void displayRoutingTable() {
+        if (myNodeList.isEmpty() && bucketTable.isEmpty()) {
+            System.out.println("Tables are empty");
+        } else {
+            System.out.println("Nodes list in the Bucket:");
+            for (Node node : myNodeList) {
+                System.out.println("\t" + node.getIp() + ":" + node.getPort());
+            }
 
+            System.out.println("Nodes list from other Buckets:");
+            Iterator entries = bucketTable.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry entry = (Map.Entry) entries.next();
+                Integer key = (Integer) entry.getKey();
+                Node node = (Node) entry.getValue();
+                System.out.println("Bucket " + key + " : " + node.getIp() + ":" + node.getPort());
+            }
+        }
     }
 
     public void searchFiles(String message) throws UnknownHostException, IOException {
@@ -336,16 +360,17 @@ public class Client {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
-    public void updateRountingTable() throws IOException{
+
+    public void updateRountingTable() throws IOException {
         ArrayList<Node> temNodeList = new ArrayList<Node>();
         for (Node node : myNodeList) {
-            if(timestamp.getTime()-node.getTimeStamp()<5000){
+            if (timestamp.getTime() - node.getTimeStamp() < 5000) {
                 temNodeList.add(node);
             }
         }
-        this.myNodeList=temNodeList;
-        
-        for(int key:bucketTable.keySet()){
+        this.myNodeList = temNodeList;
+
+        for (int key : bucketTable.keySet()) {
 
             Node neighbour = bucketTable.get(key);
             if (timestamp.getTime() - neighbour.getTimeStamp() > 5000) {
@@ -358,7 +383,7 @@ public class Client {
 
     public void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
-        boolean is_Change=false;
+        boolean is_Change = false;
         ArrayList<Node> temNodeList = new ArrayList<Node>();
         String[] splitMessage = message.split(" ");
         String ip = splitMessage[2];
@@ -370,16 +395,16 @@ public class Client {
             }
             temNodeList.add(node);
         }
-        this.myNodeList=temNodeList;
-        
-        if(!is_Change){
-            for(int key:bucketTable.keySet()){
+        this.myNodeList = temNodeList;
+
+        if (!is_Change) {
+            for (int key : bucketTable.keySet()) {
                 Node node = bucketTable.get(key);
-                if(node.getIp().equals(ip)&& node.getPort()==port){
+                if (node.getIp().equals(ip) && node.getPort() == port) {
                     node.setTimeStamp(timestamp.getTime());
-                    bucketTable.replace(key, node);                    
+                    bucketTable.replace(key, node);
                 }
             }
-        }   
-    } 
+        }
+    }
 }
