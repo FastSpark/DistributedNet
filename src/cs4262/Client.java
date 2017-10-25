@@ -218,8 +218,9 @@ public class Client {
                 // change up the "status" to ready (1)
                 break;
         }
-        while (true) {
-            System.out.println("");
+        //while (true) {
+        displayFiles();
+        System.out.println("");
             System.out.print("Input Next Command : ");
 
             msg = scanner.nextLine();
@@ -238,7 +239,7 @@ public class Client {
                     break;
                   
             }
-        }
+       // }
 
     }
 
@@ -290,7 +291,7 @@ public class Client {
         
         //length SEROK no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
-        Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
+        Pattern p = Pattern.compile(".*\\\\b"+file_name+"\\\\b.*");
         Set<String> keys = fileDictionary.keySet();
         Iterator<String> iterator = keys.iterator();
 
