@@ -84,10 +84,12 @@ public class Cs4262 {
 
             int randomFileCount = new Random().nextInt(3) + 3;
             System.out.println("Initializing node with " + randomFileCount + " files...");
+            ArrayList<String> myFileList = new ArrayList<>();
 
             for (int i = 0; i < randomFileCount; i++) {
                 int randomIndex = new Random().nextInt(fileList.length);
                 String selectedFile = fileList[randomIndex];
+                myFileList.add(selectedFile);
 
                 ArrayList<String> nodesContainingFile = fileDictionary.get(selectedFile);
                 if (nodesContainingFile == null) {
@@ -100,7 +102,7 @@ public class Cs4262 {
 
             DatagramSocket datagramSocket = new DatagramSocket(port);
 
-            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, datagramSocket);
+            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, myFileList, datagramSocket);
             client.initialize();
 
             Thread thread = new Thread(new Listener(client));
