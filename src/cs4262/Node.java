@@ -14,7 +14,8 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -110,16 +111,18 @@ public class Node {
         this.myNodeList = myNodeList;
     }
 
-    public void sendMessage(String msg) {
-        System.out.println("Sending message: " + msg);
-
-    }
-
     public void initialize() {
         // Register With Bootstrap Server
         String msg = " REG " + this.ip + " " + this.port + " " + this.userName;
         msg = "00" + Integer.toString(msg.length()) + msg;
-        sendMessage(msg);
+
+        try {
+            multicast(msg, myNodeList);
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Node.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     // handles REGOK responses from BS
@@ -150,7 +153,7 @@ public class Node {
                 // TODO
                 break;
             case "9996":
-                System.out.println("failed, can�t register. BS full.");
+                System.out.println("failed, can't register. BS full.");
             default:
                 // get the first 2 nodes' details
                 break;

@@ -57,13 +57,15 @@ public class Cs4262 {
             };
             //end of final variables
 
-            //need to handle
-            //start new listener
-            //call initializer
-            //start of getting connection details
             String ip = Inet4Address.getLocalHost().getHostAddress();
             String port = "8000";
 
+            //start of the listener
+            Listener listener = new Listener();
+            listener.run();
+            //end of the listener
+
+            //start of creating connection details
             String address = ip + ":" + port;
             int myBucketId = address.hashCode();
             myBucketId = myBucketId % k;
@@ -94,7 +96,5 @@ public class Cs4262 {
         } catch (UnknownHostException ex) {
             Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
-
 }
