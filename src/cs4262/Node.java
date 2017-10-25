@@ -58,7 +58,7 @@ public class Node {
         this.status = status;
         this.ip = ip;
         this.port = port;
-        this.userName = ip + ":" + port;
+        this.userName = ip + ":" + port; // hash( timestamp , ip, port)
         this.bucketTable = new HashMap<>();
         this.fileDictionary = new HashMap<>();
         this.myNodeList = new ArrayList<>();
@@ -167,11 +167,14 @@ public class Node {
         
         switch (arr[2]){
             case "0":
+                System.out.println("You are the first node, registered successfully with BS!");
                 break;
             case "1":
-                
+                addToMyNodeList(arr[3], arr[4]);
                 break;
             case "2":
+                addToMyNodeList(arr[3], arr[4]);
+                addToMyNodeList(arr[5], arr[6]);
                 break;
             case "9999":
                 System.out.println("failed, there is some error in the command");
@@ -184,12 +187,18 @@ public class Node {
                 // TODO
                 break;
             case "9996":
-                System.out.println("failed, can�t register. BS full.");
+                System.out.println("failed, can't register. BS full.");
             default:
-                // get the first 2 nodes' details
+                // get the FIRST 2 nodes' details
+                addToMyNodeList(arr[3], arr[4]);
+                addToMyNodeList(arr[5], arr[6]);              
                 break;
         }
         
+    }
+    
+    private void addToMyNodeList(String ip, String port){
+        myNodeList.add(new Neighbour(ip, Integer.parseInt(port)));
     }
     
     private void connectWithInitialNodes(){
