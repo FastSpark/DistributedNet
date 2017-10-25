@@ -71,15 +71,12 @@ public class BootstrapServer {
                                 while (random_1 == random_2) {
                                     random_2 = r.nextInt(High - Low) + Low;
                                 }
-                                echo(random_1 + " " + random_2);
                                 reply += "2 " + nodes.get(random_1).getIp() + " " + nodes.get(random_1).getPort() + " " + nodes.get(random_2).getIp() + " " + nodes.get(random_2).getPort();
                             }
                             nodes.add(new Neighbour(ip, port, username));
                         }
                     }
-
                     reply = String.format("%04d", reply.length() + 5) + " " + reply;
-                    echo(incoming.getPort()+"");
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                     sock.send(dpReply);
                 } else if (command.equals("UNREG")) {

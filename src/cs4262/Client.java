@@ -34,7 +34,9 @@ public class Client {
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
     private Timestamp timestamp;
-    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) {
+    private final DatagramSocket ds;
+
+    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -45,6 +47,11 @@ public class Client {
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
         this.timestamp=new Timestamp(System.currentTimeMillis());
+        
+        this.ds = new DatagramSocket(port);
+        
+        Thread thread = new Thread(new Listener(ds));
+        thread.start();
     }
 
     Client() {
@@ -120,10 +127,7 @@ public class Client {
             System.out.println("Sending message: " + msg);
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
-            DatagramSocket ds = new DatagramSocket(13548);
-            ds.send(dp);            
-            
-            
+            ds.send(dp);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SocketException ex) {
@@ -214,7 +218,7 @@ public class Client {
     }
 
     private void connectWithInitialNodes() {
-
+        
     }
 
     public void displayFiles() {
@@ -224,18 +228,38 @@ public class Client {
     public void displayRoutingTable() {
 
     }
+    
+    public void searchFiles(){
+        //length SER IP port file_name hops
+        
+    }
 
+    
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
-        String message = "FIND_BUCKET_MEMBER " + bucketId;
+        //FBM: Find Bucket Member 0011 FBM 01
+        String message = "FBM " + bucketId;
+        message= String.format("%04d", message.length() + 5) + " " + message;
         multicast(message, myNodeList);
     }
 
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
-        String nodeFromBucket = null;
+        //FBMOK: Find Bucket Member OK
+        Node nodeFromBucket = null;
+        String message=null;
         if (bucketTable.get(bucketId) != null) {
-            //  nodeFromBucket = bucketTable.get(bucketId);
+            nodeFromBucket = bucketTable.get(bucketId);
+            message = "FBMOK " +bucketId +""+ nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
+        }else{
+            message = "FBMOK "+bucketId+" null null";
         }
-        unicast("FOUND_BUCKET_MEMBER " + nodeFromBucket + " " + this.getIp() + " " + this.getPort(), fromNode);
+        message= String.format("%04d", message.length() + 5) + " " + message;
+        unicast(message, fromNode);
+    }
+    
+    public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
+        String[] split_msg = message.split(" ");        
+        Node bucket_node= new Node(split_msg[3], Integer.valueOf(split_msg[4]));
+        this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
