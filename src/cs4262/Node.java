@@ -28,7 +28,7 @@ public class Node {
     private String userName;
     private Map<Integer, Neighbour> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
-    private ArrayList<String> myNodeList;
+    private ArrayList<Neighbour> myNodeList;
     private final String[] fileList = {
         "Adventures of Tintin",
         "Jack and Jill",
@@ -104,11 +104,11 @@ public class Node {
         this.userName = userName;
     }
 
-    public Map<Integer, String> getBucketTable() {
+    public Map<Integer, Neighbour> getBucketTable() {
         return bucketTable;
     }
 
-    public void setBucketTable(Map<Integer, String> bucketTable) {
+    public void setBucketTable(Map<Integer, Neighbour> bucketTable) {
         this.bucketTable = bucketTable;
     }
 
@@ -213,7 +213,7 @@ public class Node {
     public void findNodeFromBucketReply(int bucketId, Neighbour fromNode) throws UnknownHostException, IOException {
         String nodeFromBucket = null;
         if (bucketTable.get(bucketId) != null) {
-            nodeFromBucket = bucketTable.get(bucketId);
+          //  nodeFromBucket = bucketTable.get(bucketId);
         }
         unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
     }
