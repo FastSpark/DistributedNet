@@ -18,13 +18,14 @@ import java.util.Dictionary;
  * @author nuwantha
  */
 public class Node {
+
     private int myBucketId;
     private String status;
     private String ip;
     private String port;
     private String userName;
-    private Dictionary<Integer,String> bucketTable;
-    private Dictionary<String,ArrayList<String>> fileDictionary;
+    private Dictionary<Integer, String> bucketTable;
+    private Dictionary<String, ArrayList<String>> fileDictionary;
     private ArrayList<Neighbour> myNodeList;
 
     public Node(int myBucketId, String status, String ip, String port, String userName, Dictionary<Integer, String> bucketTable, Dictionary<String, ArrayList<String>> fileDictionary, ArrayList<Neighbour> myNodeList) {
@@ -101,31 +102,28 @@ public class Node {
     public void setMyNodeList(ArrayList<Neighbour> myNodeList) {
         this.myNodeList = myNodeList;
     }
-    
+
     // 
-    
-    public void initialize(){
-    //call bs
-    //join bs
-    //
-        
+    public void initialize() {
+        //call bs
+        //join bs
+        //
+
     }
-    
-    public void fileSearch(String fileName){
-    
-    
+
+    public void fileSearch(String fileName) {
+
     }
-    
-    public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException{
-        String message= "FIND_BUCKET_MEMBER "+bucketId;
-        multicast(message,myNodeList);
+
+    public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
+        String message = "FIND_BUCKET_MEMBER " + bucketId;
+        multicast(message, myNodeList);
     }
-    
-    
-    public void findNodeFromBucketReply(int bucketId,Neighbour fromNode) throws UnknownHostException, IOException{
-        String nodeFromBucket=null;
-        if(bucketTable.get(bucketId)!=null){
-            nodeFromBucket= bucketTable.get(bucketId);
+
+    public void findNodeFromBucketReply(int bucketId, Neighbour fromNode) throws UnknownHostException, IOException {
+        String nodeFromBucket = null;
+        if (bucketTable.get(bucketId) != null) {
+            nodeFromBucket = bucketTable.get(bucketId);
         }
         unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
     }
@@ -147,11 +145,10 @@ public class Node {
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, 80);
         datagramSocket.send(packet);
     }
+
     //gracefull leave
-    public void leave(){
-    
-    
+    public void leave(int bucketId) throws IOException {
+        String message = "LEAVING BUCKET " + bucketId;
+        multicast(message, myNodeList);
     }
-    
-    
 }
