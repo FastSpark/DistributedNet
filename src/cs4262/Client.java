@@ -35,12 +35,13 @@ public class Client {
     private String userName;
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
+    private ArrayList<String> myFileList;
     private ArrayList<Node> myNodeList;
     private Timestamp timestamp;
     private DatagramSocket ds;
     Scanner scanner = new Scanner(System.in);
 
-    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, DatagramSocket datagramSocket) throws SocketException {
+    public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -49,6 +50,7 @@ public class Client {
         this.userName = username;
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
+        this.myFileList = myFileList;
         this.myNodeList = new ArrayList<>();
         this.timestamp = new Timestamp(System.currentTimeMillis());
         this.ds = datagramSocket;
@@ -245,11 +247,10 @@ public class Client {
     }
 
     public void displayFiles() {
-        Set<String> keySet = fileDictionary.keySet();
-        System.out.println("Files list in the Node:");
-        for (String string : keySet) {
-            System.out.println("\t" + string);
-        }
+        System.out.println("Files in ");
+        this.myFileList.forEach((file) -> {
+            System.out.println(file);
+        });
     }
 
     public void displayRoutingTable() {

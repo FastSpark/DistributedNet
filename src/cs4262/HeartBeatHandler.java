@@ -4,8 +4,11 @@
  * and open the template in the editor.
  */
 package cs4262;
-
+import java.io.IOException;
 import java.net.DatagramSocket;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -22,8 +25,27 @@ public class HeartBeatHandler implements Runnable{
     @Override
     public void run() {
         while (true) {
-           
+            try {
+                sendHeartBeat();
+                Thread.sleep(100000);
+                client.updateRountingTable();
+            } catch (IOException | InterruptedException ex) {
+                Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+        }
+        
+    }
+
+    //send Heartbeat to other nodes
+    public void sendHeartBeat() throws IOException{
+        String message="HEARTBEAT "+client.getIp()+" "+client.getPort();
+        message = String.format("%04d", message.length() + 5) + " " + message;
+        client.multicast(message, client.getMyNodeList());
+        Set<Integer> keySet = client.getBucketTable().keySet();
+        for (int key : keySet) {
+            client.unicast(message, client.getBucketTable().get(key));
         }
     }
-    
+
 }
