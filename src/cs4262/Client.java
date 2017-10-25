@@ -15,9 +15,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -161,7 +165,11 @@ public class Client {
             } else if (msg == "SHOW TABLE") {
                 displayRoutingTable();
             } else if (msg == "SEARCH FILES") {
-                searchFiles(msg);
+                try {
+                    searchFiles(msg);
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
     }
@@ -250,10 +258,35 @@ public class Client {
 
     }
 
-    public void searchFiles(String msg) {
+    public void searchFiles(String message) throws UnknownHostException, IOException {
         //length SER IP port file_name hops
+        String[] split = message.split(" ");
+        String file_name= split[4];
+        String result_string="";
+        
+        int hop_count=0;
+        if(split.length==6) 
+            hop_count=Integer.valueOf(split[5]);
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
+        Set<String> keys = fileDictionary.keySet();
+        Iterator<String> iterator = keys.iterator();
 
-    }
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                result_string.concat(candidate+" ");
+            }
+        }
+        
+        String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
+        ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
+        unicast(ret_message, new Node(split[2], Integer.parseInt(split[3])));
+    }   
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         //FBM: Find Bucket Member 0011 FBM 01
