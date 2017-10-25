@@ -20,7 +20,7 @@ public class Listener implements Runnable {
     @Override
     public void run() {
         try {
-            listen(13546); //To change body of generated methods, choose Tools | Templates.
+            listen(13547); //To change body of generated methods, choose Tools | Templates.
         } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -50,7 +50,9 @@ public class Listener implements Runnable {
              */
             String[] messagePart = message.split(" ");
             switch (messagePart[1]) {
-                case "REGOK":  //handle  response from bootstrp
+                case "REGOK": 
+                    System.out.println(message);    
+                    //handle  response from bootstrp
                     break;
                 case "UNROK": // handle unregister response
                     break;

@@ -11,6 +11,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -32,7 +33,7 @@ public class Client {
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
-
+    private Timestamp timestamp;
     public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
@@ -43,7 +44,7 @@ public class Client {
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
-
+        this.timestamp=new Timestamp(System.currentTimeMillis());
     }
 
     Client() {
@@ -119,8 +120,8 @@ public class Client {
             System.out.println("Sending message: " + msg);
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
-            DatagramSocket ds = new DatagramSocket(13546);
-            ds.send(dp);
+            DatagramSocket ds = new DatagramSocket(13548);
+            ds.send(dp);            
             
             
         } catch (UnknownHostException ex) {
@@ -277,4 +278,52 @@ public class Client {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
+    public void updateRountingTable() throws IOException{
+        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
+        for (Node neighbour : myNodeList) {
+            if(timestamp.getTime()-neighbour.getTimeStamp()<5000){
+                temNeighboursList.add(neighbour);
+            }
+        }
+        this.myNodeList=temNeighboursList;
+        
+        for(int key:bucketTable.keySet()){
+            Node neighbour = bucketTable.get(key);
+            if(timestamp.getTime()-neighbour.getTimeStamp()>5000){
+                bucketTable.remove(key);
+                this.findNodeFromBucket(key);
+            }
+        }
+        
+    }
+    
+    public void handleHeartBeatResponse(String message){
+        //length HEARTBEATOK IP_address port_no
+        boolean is_Change=false;
+        ArrayList<Node> temNeighboursList = new ArrayList<Node>();
+        String[] splitMessage = message.split(" ");
+        String ip = splitMessage[2];
+        int port= Integer.parseInt(splitMessage[3]);
+        for (Node node : myNodeList) {
+            if(node.getIp().equals(ip)&& node.getPort()==port){
+                node.setTimeStamp(timestamp.getTime());
+                is_Change=true;
+            }
+            temNeighboursList.add(node);
+        }
+        this.myNodeList=temNeighboursList;
+        
+        if(!is_Change){
+            for(int key:bucketTable.keySet()){
+                Node neighbour = bucketTable.get(key);
+                if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
+                    neighbour.setTimeStamp(timestamp.getTime());
+                    bucketTable.replace(key, neighbour);                    
+                }
+            }
+        }
+        
+    }
+
+    
 }

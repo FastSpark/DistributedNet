@@ -59,7 +59,7 @@ public class Cs4262 {
             //end of final variables
 
             String ip = Inet4Address.getLocalHost().getHostAddress();
-            int port = 80;
+            int port = 13547;
 
             //start of the listener
             Thread thread = new Thread(new Listener());
