@@ -213,7 +213,7 @@ public class Client {
     }
 
     private void connectWithInitialNodes() {
-
+        
     }
 
     public void displayFiles() {
@@ -223,18 +223,35 @@ public class Client {
     public void displayRoutingTable() {
 
     }
+    
+    public void searchFiles(){
+        //length SER IP port file_name hops
+        
+    }
 
+    
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
-        String message = "FIND_BUCKET_MEMBER " + bucketId;
+        //FBM: Find Bucket Member 0011 FBM 01
+        String message = "0011 FBM " + bucketId;
         multicast(message, myNodeList);
     }
 
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
-        String nodeFromBucket = null;
+        //FBMOK: Find Bucket Member OK
+        Node nodeFromBucket = null;
         if (bucketTable.get(bucketId) != null) {
-            //  nodeFromBucket = bucketTable.get(bucketId);
+            nodeFromBucket = bucketTable.get(bucketId);
+            unicast("FBMOK " +bucketId +""+ nodeFromBucket.getIp() + " " + nodeFromBucket.getPort(), fromNode);
+        }else{
+            unicast("FBMOK "+bucketId+" null null", fromNode);
         }
-        unicast("FOUND_BUCKET_MEMBER " + nodeFromBucket + " " + this.getIp() + " " + this.getPort(), fromNode);
+        
+    }
+    
+    public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
+        String[] split_msg = message.split(" ");        
+        Node bucket_node= new Node(split_msg[2], Integer.valueOf(split_msg[3]));
+        this.bucketTable.put(Integer.valueOf(split_msg[1]), bucket_node);
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
