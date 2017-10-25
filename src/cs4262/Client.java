@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -35,6 +36,7 @@ public class Client {
     private ArrayList<Node> myNodeList;
     private Timestamp timestamp;
     private DatagramSocket ds;
+    Scanner scanner = new Scanner(System.in);
 
     public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
@@ -132,6 +134,7 @@ public class Client {
 
             DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
             ds.send(dp);
+
         } catch (UnknownHostException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SocketException ex) {
@@ -147,6 +150,20 @@ public class Client {
         msg = "00" + Integer.toString(msg.length()) + msg;
 
         sendMessage(msg);
+
+        while (true) {
+            System.out.println("");
+            System.out.print("Input Next Command : ");
+
+            msg = scanner.nextLine();
+            if (msg == "SHOW FILES") {
+                displayFiles();
+            } else if (msg == "SHOW TABLE") {
+                displayRoutingTable();
+            } else if (msg == "SEARCH FILES") {
+                searchFiles(msg);
+            }
+        }
     }
 
     // handles REGOK responses from BS
@@ -193,7 +210,7 @@ public class Client {
                 // complete bucketTable
                 for (int i = 0; i < k; i++) {
                     if (!bucketTable.containsKey(i)) {
-                        // findNodeFromBucket(i);   handle exceptions
+//                        findNodeFromBucket(i);   //handle exceptions
                     }
                 }
 
@@ -226,14 +243,14 @@ public class Client {
     }
 
     public void displayFiles() {
-
+        
     }
 
     public void displayRoutingTable() {
 
     }
 
-    public void searchFiles() {
+    public void searchFiles(String msg) {
         //length SER IP port file_name hops
 
     }

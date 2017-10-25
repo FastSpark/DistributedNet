@@ -58,8 +58,9 @@ public class Listener implements Runnable {
             String[] messagePart = message.split(" ");
             switch (messagePart[1]) {
                 case "REGOK":
+                    //handle  response from bootstrap
                     System.out.println(message);
-                    //handle  response from bootstrp
+                    this.client.handleRegisterResponse(message);
                     break;
                 case "UNROK": // handle unregister response
                     break;

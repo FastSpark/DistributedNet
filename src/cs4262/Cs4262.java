@@ -98,9 +98,9 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            DatagramSocket ds = new DatagramSocket(port);
+            DatagramSocket datagramSocket = new DatagramSocket(port);
 
-            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, ds);
+            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, datagramSocket);
             client.initialize();
 
             Thread thread = new Thread(new Listener(client));
