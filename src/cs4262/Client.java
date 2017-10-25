@@ -223,15 +223,16 @@ public class Client {
             System.out.print("Input Next Command : ");
 
             msg = scanner.nextLine();
-            switch (msg) {
-                case "DISPLAY FILES":
+            
+            switch (msg.split(" ")[0]) {
+                case "DISPLAY_FILES":
                     displayFiles();
                     break;
-                case "DISPLAY TABLE":
+                case "DISPLAY_TABLE":
                     displayRoutingTable();
                     break;
-                case "SEARCH FILES":
-                    searchFiles(msg);
+                case "SEARCH_FILES":
+                    initializeSearch(msg);
                     break;
                 default:
                     break;
@@ -282,6 +283,33 @@ public class Client {
         }
     }
 
+    public void initializeSearch(String msg) throws IOException{
+        //SEARCH_FILES file_name
+        String file_name= msg.split(" ")[1];
+        String result_string="";
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
+        Set<String> keys = fileDictionary.keySet();
+        Iterator<String> iterator = keys.iterator();
+
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                result_string.concat(candidate+" ");
+            }
+        }
+        System.out.println(result_string); 
+        
+        /////////
+        String net_message="SER "+this.getIp()+" "+this.getPort()+" "+msg.split(" ")[1]+" 1";
+        net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
+        searchFiles(net_message);
+    }
+    
     public void searchFiles(String message) throws UnknownHostException, IOException {
         //length SER IP port file_name hops
         String[] split = message.split(" ");
