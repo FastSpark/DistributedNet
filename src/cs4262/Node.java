@@ -4,6 +4,7 @@
  * and open the template in the editor.
  */
 package cs4262;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -13,7 +14,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Random;
 
 /**
  *
@@ -29,39 +29,20 @@ public class Node {
     private Map<Integer, Neighbour> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Neighbour> myNodeList;
-    private final String[] fileList = {
-        "Adventures of Tintin",
-        "Jack and Jill",
-        "Glee",
-        "The Vampire Diarie",
-        "King Arthur",
-        "Windows XP",
-        "Harry Potter",
-        "Kung Fu Panda",
-        "Lady Gaga",
-        "Twilight",
-        "Windows 8",
-        "Mission Impossible",
-        "Turn Up The Music",
-        "Super Mario",
-        "American Pickers",
-        "Microsoft Office 2010",
-        "Happy Feet",
-        "Modern Family",
-        "American Idol",
-        "Hacking for Dummies"
-    };
 
-    public Node(int myBucketId, String status, String ip, String port) {
-
+    public Node(int myBucketId, String ip, String port, String username, Map<String, ArrayList<String>> fileDictionary) {
         this.myBucketId = myBucketId;
-        this.status = status;
+        this.status = "0";
         this.ip = ip;
         this.port = port;
-        this.userName = ip + ":" + port; // hash( timestamp , ip, port)
+        this.userName = username;
         this.bucketTable = new HashMap<>();
-        this.fileDictionary = new HashMap<>();
+        this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
+    }
+
+    Node() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     public int getMyBucketId() {
@@ -127,45 +108,30 @@ public class Node {
     public void setMyNodeList(ArrayList<Neighbour> myNodeList) {
         this.myNodeList = myNodeList;
     }
-    
-    public void sendMessage(String msg){
+
+    public void sendMessage(String msg) {
         System.out.println("Sending message: " + msg);
-        
+
     }
 
     public void initialize() {
-        // initialize files (3 to 5)
-        int randomFileCount = new Random().nextInt(3) + 3;
-        System.out.println("Initializing node with " + randomFileCount + " files...");
-        
-        for (int i = 0; i < randomFileCount ; i++) {
-            int randomIndex = new Random().nextInt(fileList.length);
-            String selectedFile = fileList[randomIndex];
-            
-            ArrayList<String> nodesContainingFile = fileDictionary.get(selectedFile);
-            if(nodesContainingFile == null){
-                nodesContainingFile = new ArrayList<>();
-                nodesContainingFile.add(this.userName);
-            } else {
-                nodesContainingFile.add(this.userName);
-            }
-        }
-        
         // Register With Bootstrap Server
         String msg = " REG " + this.ip + " " + this.port + " " + this.userName;
         msg = "00" + Integer.toString(msg.length()) + msg;
         sendMessage(msg);
     }
-    
+
     // handles REGOK responses from BS
     // length REGOK no_nodes IP_1 port_1 IP_2 port_2
-    public void handleRegisterResponse(String msg){
+    public void handleRegisterResponse(String msg) {
         String[] arr = msg.split(" ");
-        
+
         // validate msg
-        if (!arr[1].equals("REGOK")){return;}
-        
-        switch (arr[2]){
+        if (!arr[1].equals("REGOK")) {
+            return;
+        }
+
+        switch (arr[2]) {
             case "0":
                 System.out.println("You are the first node, registered successfully with BS!");
                 break;
@@ -194,7 +160,7 @@ public class Node {
                 addToMyNodeList(arr[5], arr[6]);              
                 break;
         }
-        
+
     }
     
     private void addToMyNodeList(String ip, String port){
@@ -213,7 +179,6 @@ public class Node {
 
     }
 
-
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         String message = "FIND_BUCKET_MEMBER " + bucketId;
         multicast(message, myNodeList);
@@ -222,12 +187,12 @@ public class Node {
     public void findNodeFromBucketReply(int bucketId, Neighbour fromNode) throws UnknownHostException, IOException {
         String nodeFromBucket = null;
         if (bucketTable.get(bucketId) != null) {
-          //  nodeFromBucket = bucketTable.get(bucketId);
+            //  nodeFromBucket = bucketTable.get(bucketId);
         }
-        unicast("FOUND_BUCKET_MEMBER "+nodeFromBucket+" "+this.getIp()+" "+this.getPort(),fromNode);
+        unicast("FOUND_BUCKET_MEMBER " + nodeFromBucket + " " + this.getIp() + " " + this.getPort(), fromNode);
     }
-    
-    public void multicast(String message,ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException{
+
+    public void multicast(String message, ArrayList<Neighbour> neighboursList) throws SocketException, UnknownHostException, IOException {
         DatagramSocket datagramSocket = new DatagramSocket();
         for (Neighbour neighbour : neighboursList) {
             byte[] buffer = message.getBytes();
@@ -236,8 +201,8 @@ public class Node {
             datagramSocket.send(packet);
         }
     }
-    
-    public void unicast(String message,Neighbour neighbour) throws SocketException, UnknownHostException, IOException{
+
+    public void unicast(String message, Neighbour neighbour) throws SocketException, UnknownHostException, IOException {
         DatagramSocket datagramSocket = new DatagramSocket();
         byte[] buffer = message.getBytes();
         InetAddress receiverAddress = InetAddress.getByName(neighbour.getIp());

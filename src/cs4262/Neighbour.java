@@ -2,7 +2,6 @@ package cs4262;
 
 import java.sql.Timestamp;
 
-
 public class Neighbour{
 	
         private final String ip;
@@ -26,5 +25,4 @@ public class Neighbour{
         public long getTimeStamp() {
             return timeStamp;
         }
-        
 }
