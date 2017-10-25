@@ -10,6 +10,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -51,7 +52,8 @@ public class Node {
         "American Idol",
         "Hacking for Dummies"
     };
-
+    
+    private Timestamp timestamp;
     public Node(int myBucketId, String status, String ip, String port) {
 
         this.myBucketId = myBucketId;
@@ -62,6 +64,7 @@ public class Node {
         this.bucketTable = new HashMap<>();
         this.fileDictionary = new HashMap<>();
         this.myNodeList = new ArrayList<>();
+        this.timestamp= new Timestamp(System.currentTimeMillis());
     }
 
     public int getMyBucketId() {
@@ -241,4 +244,52 @@ public class Node {
         String message = "LEAVING BUCKET " + bucketId;
         multicast(message, myNodeList);
     }
+    
+    public void updateRountingTable() throws IOException{
+        ArrayList<Neighbour> temNeighboursList = new ArrayList<Neighbour>();
+        for (Neighbour neighbour : myNodeList) {
+            if(timestamp.getTime()-neighbour.getTimeStamp()<5000){
+                temNeighboursList.add(neighbour);
+            }
+        }
+        this.myNodeList=temNeighboursList;
+        
+        for(int key:bucketTable.keySet()){
+            Neighbour neighbour = bucketTable.get(key);
+            if(timestamp.getTime()-neighbour.getTimeStamp()>5000){
+                bucketTable.remove(key);
+                this.findNodeFromBucket(key);
+            }
+        }
+        
+    }
+    
+    public void handleHeartBeatResponse(String message){
+        //length HEARTBEATOK IP_address port_no
+        boolean is_Change=false;
+        ArrayList<Neighbour> temNeighboursList = new ArrayList<Neighbour>();
+        String[] splitMessage = message.split(" ");
+        String ip = splitMessage[2];
+        int port= Integer.parseInt(splitMessage[3]);
+        for (Neighbour neighbour : myNodeList) {
+            if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
+                neighbour.setTimeStamp(timestamp.getTime());
+                is_Change=true;
+            }
+            temNeighboursList.add(neighbour);
+        }
+        this.myNodeList=temNeighboursList;
+        
+        if(!is_Change){
+            for(int key:bucketTable.keySet()){
+                Neighbour neighbour = bucketTable.get(key);
+                if(neighbour.getIp().equals(ip)&& neighbour.getPort()==port){
+                    neighbour.setTimeStamp(timestamp.getTime());
+                    bucketTable.replace(key, neighbour);                    
+                }
+            }
+        }
+        
+    }
+    
 }
