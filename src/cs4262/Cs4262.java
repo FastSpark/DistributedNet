@@ -63,8 +63,6 @@ public class Cs4262 {
 
             //start of the input
             String ip = Inet4Address.getLocalHost().getHostAddress();
-//            int port = 80;
-
             Scanner scanner = new Scanner(System.in);
             System.out.println("IP Address : " + ip);
             System.out.print("Input Port : ");
@@ -97,9 +95,9 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            DatagramSocket ds = new DatagramSocket(port);
+            DatagramSocket datagramSocket = new DatagramSocket(port);
 
-            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, ds);
+            Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, datagramSocket);
             client.initialize();
 
             Thread thread = new Thread(new Listener(client));
