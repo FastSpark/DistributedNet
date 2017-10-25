@@ -14,23 +14,26 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author nuwantha
  */
 public class Client {
+
     private int k;
     private int myBucketId;
     private String status;
     private String ip;
-    private String port;
+    private int port;
     private String userName;
     private Map<Integer, Node> bucketTable;
     private Map<String, ArrayList<String>> fileDictionary;
     private ArrayList<Node> myNodeList;
 
-    public Client(int myBucketId, String ip, String port, String username, Map<String, ArrayList<String>> fileDictionary) {
+    public Client(int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary) {
         this.k = 3; // get from main
         this.myBucketId = myBucketId;
         this.status = "0";
@@ -40,7 +43,7 @@ public class Client {
         this.bucketTable = new HashMap<>();
         this.fileDictionary = fileDictionary;
         this.myNodeList = new ArrayList<>();
-        
+
     }
 
     Client() {
@@ -71,11 +74,11 @@ public class Client {
         this.ip = ip;
     }
 
-    public String getPort() {
+    public int getPort() {
         return port;
     }
 
-    public void setPort(String port) {
+    public void setPort(int port) {
         this.port = port;
     }
 
@@ -112,14 +115,28 @@ public class Client {
     }
 
     public void sendMessage(String msg) {
-        System.out.println("Sending message: " + msg);
+        try {
+            System.out.println("Sending message: " + msg);
 
+            DatagramPacket dp = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(this.ip), 55555);
+            DatagramSocket ds = new DatagramSocket(13546);
+            ds.send(dp);
+            
+            
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SocketException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     public void initialize() {
         // Register With Bootstrap Server
         String msg = " REG " + this.ip + " " + this.port + " " + this.userName;
         msg = "00" + Integer.toString(msg.length()) + msg;
+
         sendMessage(msg);
     }
 
@@ -159,23 +176,23 @@ public class Client {
                 break;
             case "9996":
                 System.out.println("failed, can't register. BS full.");
-            default: 
+            default:
                 // store FIRST 2 nodes' details
                 storeNode(arr[3], arr[4]);
-                storeNode(arr[5], arr[6]);  
-                
+                storeNode(arr[5], arr[6]);
+
                 // complete bucketTable
-                for (int i = 0; i< k; i++){
-                    if (!bucketTable.containsKey(i)){
-                       // findNodeFromBucket(i);   handle exceptions
+                for (int i = 0; i < k; i++) {
+                    if (!bucketTable.containsKey(i)) {
+                        // findNodeFromBucket(i);   handle exceptions
                     }
                 }
 
                 // complete myNodeList    
-                if(myNodeList.isEmpty()){
+                if (myNodeList.isEmpty()) {
                     // findNodeFromBucket(myBucketId);
                     // send message to that returned node to get it's myNodeList and then store
-                }else{
+                } else {
                     // send message to that node to get it's myNodeList and then store
                 }
 
@@ -184,19 +201,19 @@ public class Client {
         }
 
     }
-    
-    private void storeNode(String ip, String port){   
+
+    private void storeNode(String ip, String port) {
         Node newNode = new Node(ip, Integer.parseInt(port));
-        int bucketId = (ip + ":" + port).hashCode() % k; 
-        if(bucketId == this.myBucketId){
-             myNodeList.add(newNode);
-        } else{
+        int bucketId = (ip + ":" + port).hashCode() % k;
+        if (bucketId == this.myBucketId) {
+            myNodeList.add(newNode);
+        } else {
             bucketTable.put(bucketId, newNode);
-        } 
+        }
     }
-    
-    private void connectWithInitialNodes(){
-        
+
+    private void connectWithInitialNodes() {
+
     }
 
     public void displayFiles() {

@@ -29,7 +29,7 @@ public class Cs4262 {
         //call initializer
 
         try {
-            System.out.println("main started");
+            System.out.println("Main Thread Started");
 
             //start of final variables
             final int k = 3;
@@ -58,11 +58,13 @@ public class Cs4262 {
             //end of final variables
 
             String ip = Inet4Address.getLocalHost().getHostAddress();
-            String port = "8000";
+            int port = 80;
 
             //start of the listener
-            Listener listener = new Listener();
-            listener.run();
+            Thread thread = new Thread(new Listener());
+            thread.start();
+//            Listener listener = new Listener();
+//            listener.run();
             //end of the listener
 
             //start of creating connection details
@@ -90,8 +92,8 @@ public class Cs4262 {
             }
             //end of initializing files
 
-            Client node = new Client(myBucketId, ip, port, address, fileDictionary);
-            node.initialize();
+            Client client = new Client(myBucketId, ip, port, address, fileDictionary);
+            client.initialize();
 
         } catch (UnknownHostException ex) {
             Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);

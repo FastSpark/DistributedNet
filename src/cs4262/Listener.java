@@ -20,7 +20,7 @@ public class Listener implements Runnable {
     @Override
     public void run() {
         try {
-            listen(1500); //To change body of generated methods, choose Tools | Templates.
+            listen(13546); //To change body of generated methods, choose Tools | Templates.
         } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -32,7 +32,7 @@ public class Listener implements Runnable {
 
         // Socket for server to listen at.
         DatagramSocket datagramSocket = new DatagramSocket(portNum);
-        System.out.println("Server is now running at port: " + portNum);
+        System.out.println("Now listening to port: " + portNum);
         byte[] buffer;
         DatagramPacket packet;
         // Simply making Server run continously.
