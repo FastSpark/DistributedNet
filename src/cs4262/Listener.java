@@ -55,7 +55,9 @@ public class Listener implements Runnable {
             /* here we need to process the message and call recuired function according to the
             message type
              */
-            String[] messagePart = message.split(" ");
+            String[] messagePart = message.split(" ");  
+            String[] sentNode;
+            System.out.println(message);
             switch (messagePart[1]) {
                 case "REGOK":
                     //handle  response from bootstrap
@@ -81,10 +83,19 @@ public class Listener implements Runnable {
                      //this.client.
                 case "FBM": //multicast message to find a node from a bucket
                     System.out.println(message);
-                    this.client.findNodeFromBucketReply(Integer.parseInt(messagePart[2]),new Node(client.getIp(), client.getPort()));
+                    sentNode = messagePart[3].split(":");
+                    this.client.findNodeFromBucketReply(Integer.parseInt(messagePart[2]),new Node(sentNode[0],Integer.valueOf(sentNode[1])));
                     break;
                 case "FBMOK": //reply to FBM
                     this.client.receiveReplyFindNodeFromBucket(message);
+                    break;
+                case "FNL": // unicast message to find myNodeList from node
+                    System.out.println(message);
+                    sentNode = messagePart[2].split(":");
+                    this.client.findMyNodeListFromNodeReply(new Node(sentNode[0],Integer.valueOf(sentNode[1])));
+                    break;
+                case "FNLOK": //reply to FNL
+                    this.client.receiveReplyfindMyNodeListFromNode(message);
                     break;
 
             }

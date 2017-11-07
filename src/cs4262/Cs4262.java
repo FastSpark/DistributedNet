@@ -75,8 +75,9 @@ public class Cs4262 {
 
             //start of creating connection details
             String address = ip + ":" + port;
-            int myBucketId = address.hashCode();
+            int myBucketId = Math.abs(address.hashCode());
             myBucketId = myBucketId % k;
+            System.out.println("Bucket Id: " + myBucketId);
             //end of getting connection details
 
             //start of initializing files (3 to 5)
@@ -108,7 +109,7 @@ public class Cs4262 {
             Thread thread = new Thread(new Listener(client));
             thread.start();
             Thread heartBeatThread = new Thread(new HeartBeatHandler(client));
-            heartBeatThread.start();
+//            heartBeatThread.start();
             // } catch (UnknownHostException ex) {
             //   Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SocketException ex) {
