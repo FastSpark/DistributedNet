@@ -1,4 +1,4 @@
-package cs4262;
+
 
 public class Neighbour{
 	private String ip;
