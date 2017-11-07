@@ -15,6 +15,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
@@ -29,20 +30,20 @@ import java.util.regex.Pattern;
  */
 public class Client {
 
-    private int k;
+    private int k; //number of buckets
     private int myBucketId;
-    private String status;
+    private String status; //whether node is intializing or up
     private String ip;
     private int port;
-    private String userName;
-    private Map<Integer, Node> bucketTable;
-    private Map<String, ArrayList<String>> fileDictionary;
-    private ArrayList<String> myFileList;
-    private ArrayList<Node> myNodeList;
-    private Timestamp timestamp;
+    private String userName; //hash(ip+port)
+    private Map<Integer, Node> bucketTable; //bucket and the node I know from that bucket
+    private Map<String, ArrayList<String>> fileDictionary; //filename: nodelist
+    private ArrayList<String> myFileList; //filenames with me
+    private ArrayList<Node> myNodeList; //nodes in my bucket
+    private Timestamp timestamp; 
     private DatagramSocket ds;
     Scanner scanner = new Scanner(System.in);
-
+    
     public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
@@ -329,22 +330,43 @@ public class Client {
         
         //length SEROK no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
-        Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
-        Set<String> keys = fileDictionary.keySet();
+        Pattern p = Pattern.compile("[a-zA-Z\\s]*"+file_name+"[a-zA-Z\\s]*");
+        
+        Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
-
+        
+        //search in my files list
         while (iterator.hasNext()) {
             String candidate = iterator.next();
             Matcher m = p.matcher(candidate);
             if (m.matches()) {
                 results.add(candidate);
-                result_string.concat(candidate+" ");
+                System.out.println(candidate);
+                result_string  = result_string.concat(candidate+" ");
             }
         }
-        
-        String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
-        ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
-        unicast(ret_message, new Node(split[2], Integer.parseInt(split[3])));
+        if(results.size()>0){
+            String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
+            ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
+            System.out.println(ret_message);
+        }else{
+            
+            keys = fileDictionary.keySet();
+            iterator = keys.iterator();
+            ArrayList<String> nodes=new ArrayList<>();
+            ArrayList<Node> nodelist = new ArrayList<>();
+            
+            while (iterator.hasNext()) {
+                String candidate = iterator.next();
+                Matcher m = p.matcher(candidate);
+                if (m.matches()) 
+                    nodes=fileDictionary.get(candidate);
+                    for(String node: nodes){
+                        nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
+                    }
+                    multicast(message,nodelist );
+            }
+        }
     }   
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
