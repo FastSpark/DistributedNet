@@ -17,9 +17,8 @@ import java.util.logging.Logger;
 public class HeartBeatHandler implements Runnable{
     private DatagramSocket ds;
     private Client client;
-    public HeartBeatHandler(Client client, DatagramSocket ds){
+    public HeartBeatHandler(Client client){
         this.client=client;
-        this.ds=ds;
     }
     
     @Override
@@ -27,7 +26,7 @@ public class HeartBeatHandler implements Runnable{
         while (true) {
             try {
                 sendHeartBeat();
-                Thread.sleep(100000);
+                Thread.sleep(100);
                 client.updateRountingTable();
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
@@ -47,5 +46,4 @@ public class HeartBeatHandler implements Runnable{
             client.unicast(message, client.getBucketTable().get(key));
         }
     }
-
 }

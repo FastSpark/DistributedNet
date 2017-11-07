@@ -15,11 +15,14 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -27,20 +30,20 @@ import java.util.logging.Logger;
  */
 public class Client {
 
-    private int k;
+    private int k; //number of buckets
     private int myBucketId;
-    private String status;
+    private String status; //whether node is intializing or up
     private String ip;
     private int port;
-    private String userName;
-    private Map<Integer, Node> bucketTable;
-    private Map<String, ArrayList<String>> fileDictionary;
-    private ArrayList<String> myFileList;
-    private ArrayList<Node> myNodeList;
-    private Timestamp timestamp;
+    private String userName; //hash(ip+port)
+    private Map<Integer, Node> bucketTable; //bucket and the node I know from that bucket
+    private Map<String, ArrayList<String>> fileDictionary; //filename: nodelist
+    private ArrayList<String> myFileList; //filenames with me
+    private ArrayList<Node> myNodeList; //nodes in my bucket
+    private Timestamp timestamp; 
     private DatagramSocket ds;
     Scanner scanner = new Scanner(System.in);
-
+    
     public Client(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) throws SocketException {
         this.k = k; // get from main
         this.myBucketId = myBucketId;
@@ -154,25 +157,12 @@ public class Client {
         msg = "00" + Integer.toString(msg.length()) + msg;
 
         sendMessage(msg);
-
-        while (true) {
-            System.out.println("");
-            System.out.print("Input Next Command : ");
-
-            msg = scanner.nextLine();
-            if (msg.equals("DISPLAY FILES")) {
-                displayFiles();
-            } else if (msg.equals("DISPLAY TABLE")) {
-                displayRoutingTable();
-            } else if (msg.equals("SEARCH FILES")) {
-                searchFiles(msg);
-            }
-        }
+        
     }
 
     // handles REGOK responses from BS
     // length REGOK no_nodes IP_1 port_1 IP_2 port_2
-    public void handleRegisterResponse(String msg) {
+    public void handleRegisterResponse(String msg) throws IOException {
         String[] arr = msg.split(" ");
 
         // validate msg
@@ -213,6 +203,7 @@ public class Client {
 
                 // complete bucketTable
                 for (int i = 0; i < k; i++) {
+                    
                     if (!bucketTable.containsKey(i)) {
 //                        findNodeFromBucket(i);   //handle exceptions
                     }
@@ -229,6 +220,27 @@ public class Client {
                 // change up the "status" to ready (1)
                 break;
         }
+//        while (true) {
+//            System.out.println("");
+//            System.out.print("Input Next Command : ");
+//
+//            msg = scanner.nextLine();
+//            switch (msg) {
+//                case "DISPLAY FILES":
+//                    displayFiles();
+//                    break;
+//                case "DISPLAY TABLE":
+//                    displayRoutingTable();
+//                    break;
+//                case "SEARCH FILES":
+//                    searchFiles(msg);
+//                    break;
+//                default:
+//                    break;
+//            }
+//        }
+
+        connectWithNodes();
 
     }
 
@@ -242,8 +254,14 @@ public class Client {
         }
     }
 
-    private void connectWithInitialNodes() {
-
+    private void connectWithNodes() {
+        // indicate that I'm new to net
+        // send file list with this
+        // that node response with its myNodeList
+    }
+    
+    public void connectWithNodesResponse(){
+        
     }
 
     public void displayFiles() {
@@ -273,10 +291,83 @@ public class Client {
         }
     }
 
-    public void searchFiles(String msg) {
-        //length SER IP port file_name hops
+    public void initializeSearch(String msg) throws IOException{
+        //SEARCH_FILES file_name
+        String file_name= msg.split(" ")[1];
+        String result_string="";
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile(".*\\\\b"+file_name+"\\\\b.*");
+        Set<String> keys = fileDictionary.keySet();
+        Iterator<String> iterator = keys.iterator();
 
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                result_string.concat(candidate+" ");
+            }
+        }
+        System.out.println(result_string); 
+        
+        /////////
+        String net_message="SER "+this.getIp()+" "+this.getPort()+" "+msg.split(" ")[1]+" 1";
+        net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
+        searchFiles(net_message);
     }
+    
+    public void searchFiles(String message) throws UnknownHostException, IOException {
+        //length SER IP port file_name hops
+        String[] split = message.split(" ");
+        String file_name= split[4];
+        String result_string="";
+        
+        int hop_count=0;
+        if(split.length==6) 
+            hop_count=Integer.valueOf(split[5]);
+        
+        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        ArrayList<String> results = new ArrayList<String>();
+        Pattern p = Pattern.compile("[a-zA-Z\\s]*"+file_name+"[a-zA-Z\\s]*");
+        
+        Set<String> keys = new HashSet<>(myFileList);
+        Iterator<String> iterator = keys.iterator();
+        
+        //search in my files list
+        while (iterator.hasNext()) {
+            String candidate = iterator.next();
+            Matcher m = p.matcher(candidate);
+            if (m.matches()) {
+                results.add(candidate);
+                System.out.println(candidate);
+                result_string  = result_string.concat(candidate+" ");
+            }
+        }
+        if(results.size()>0){
+            String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
+            ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
+            System.out.println(ret_message);
+        }else{
+            
+            keys = fileDictionary.keySet();
+            iterator = keys.iterator();
+            ArrayList<String> nodes=new ArrayList<>();
+            ArrayList<Node> nodelist = new ArrayList<>();
+            
+            while (iterator.hasNext()) {
+                String candidate = iterator.next();
+                Matcher m = p.matcher(candidate);
+                if (m.matches()) 
+                    nodes=fileDictionary.get(candidate);
+                    for(String node: nodes){
+                        nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
+                    }
+                    multicast(message,nodelist );
+            }
+        }
+    }   
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         //FBM: Find Bucket Member 0011 FBM 01
@@ -300,16 +391,19 @@ public class Client {
     }
 
     public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
+       
         String[] split_msg = message.split(" ");
         Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
-        this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+        if(this.getBucketTable().get(split_msg[2])!=null){
+                this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+        }
     }
 
     public void multicast(String message, ArrayList<Node> nodesList) throws SocketException, UnknownHostException, IOException {
         for (Node node : nodesList) {
             byte[] buffer = message.getBytes();
             InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, node.getPort());
             ds.send(packet);
         }
     }
@@ -317,7 +411,7 @@ public class Client {
     public void unicast(String message, Node node) throws SocketException, UnknownHostException, IOException {
         byte[] buffer = message.getBytes();
         InetAddress receiverAddress = InetAddress.getByName(node.getIp());
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, this.port);
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, receiverAddress, node.getPort());
         ds.send(packet);
     }
 
@@ -373,4 +467,13 @@ public class Client {
             }
         }
     }
+    
+    public void sendHeartBeatReply(String message) throws IOException{
+        String newMessage="HEARTBEATOK "+this.getIp()+" "+this.getPort();
+        newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
+        String[] splitMessage = message.split(" ");
+        Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
+        unicast(newMessage, node);    
+    }
+    
 }
