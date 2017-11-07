@@ -374,7 +374,7 @@ public class Client {
             }
             
             if(!found){
-                multicast(message, new ArrayList<Node>(map.values()));
+                multicast(message, new ArrayList<Node>(bucketTable.values()));
             }
         }
     }   
