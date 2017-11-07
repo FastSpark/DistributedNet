@@ -35,7 +35,7 @@ public class Client {
     private String status; //whether node is intializing or up
     private String ip;
     private int port;
-    private String userName; //hash(ip+port)
+    private String userName; //hash(ip:port)
     private Map<Integer, Node> bucketTable; //bucket and the node I know from that bucket
     private Map<String, ArrayList<String>> fileDictionary; //filename: nodelist
     private ArrayList<String> myFileList; //filenames with me
@@ -335,6 +335,9 @@ public class Client {
         Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
         
+        ArrayList<String> nodes=new ArrayList<>();
+        ArrayList<Node> nodelist = new ArrayList<>();
+        
         //search in my files list
         while (iterator.hasNext()) {
             String candidate = iterator.next();
@@ -353,18 +356,25 @@ public class Client {
             
             keys = fileDictionary.keySet();
             iterator = keys.iterator();
-            ArrayList<String> nodes=new ArrayList<>();
-            ArrayList<Node> nodelist = new ArrayList<>();
+            
+            boolean found=false;
             
             while (iterator.hasNext()) {
                 String candidate = iterator.next();
                 Matcher m = p.matcher(candidate);
                 if (m.matches()) 
+                {
                     nodes=fileDictionary.get(candidate);
                     for(String node: nodes){
                         nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
                     }
                     multicast(message,nodelist );
+                }
+                found= true;    
+            }
+            
+            if(!found){
+                multicast(message, new ArrayList<Node>(map.values()));
             }
         }
     }   
