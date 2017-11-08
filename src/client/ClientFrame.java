@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -671,9 +670,9 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
 
                 if (!bucketTable.containsKey(this.myBucketId)) { // if I'm only the node in my bucket no need to wait for myNodeList to populate
-                    System.out.println("I'm the only node in my bucket");
-                    this.displayRoutingTable();
-                    this.status = "1";
+//                    System.out.println("I'm the only node in my bucket");
+//                    this.displayRoutingTable();
+//                    this.status = "1";
                 } else if (this.myNodeList.size() == 1) { // if heven't receive a node in same bucket and haven't called findMyNodeListFromNode inside storeNode method
                     // request myNodeList from bucketTable.get(this.myBucketId)
                     this.findMyNodeListFromNode(this.bucketTable.get(this.myBucketId));
@@ -964,11 +963,25 @@ public class ClientFrame extends javax.swing.JFrame {
         }
     }
 
-    public void findMyNodeListFromNodeReply(Node fromNode) throws UnknownHostException, IOException {
+    public void findMyNodeListFromNodeReply(Node fromNode, String fileList) throws UnknownHostException, IOException {
         String message = "FNLOK ";
         for (int i = 0; i < this.myNodeList.size(); i++) {
-            message += this.myNodeList.get(i).getIp() + ":" + Integer.toString(this.myNodeList.get(i).getPort()) + " ";
+            message += this.myNodeList.get(i).getIp() + ":" + Integer.toString(this.myNodeList.get(i).getPort());
         }
+                        
+        // make fileDictionary string
+        String FD = ";";
+        for (String key : fileDictionary.keySet()) {
+            ArrayList<String> nodesList = fileDictionary.get(key);
+            FD += key + "=";
+            for(int i =0; i< nodesList.size(); i++){
+                FD += nodesList.get(i) + ",";
+            }
+            FD += "|";
+        }
+        
+        message += FD;
+
         message = String.format("%04d", message.length() + 5) + " " + message;
         unicast(message, fromNode);
 
@@ -985,11 +998,64 @@ public class ClientFrame extends javax.swing.JFrame {
         }
 
         // get file list of that new node and store in fileDictionary
+        String[] files = fileList.split(":");
+        for (int i=0; i<files.length; i++){
+            ArrayList<String> nodesContainingFile = this.fileDictionary.get(files[i]);
+            if (nodesContainingFile == null) {
+                nodesContainingFile = new ArrayList<>();
+            }
+            nodesContainingFile.add(fromNode.getIp() + ":" +  Integer.toString(fromNode.getPort()));
+            this.fileDictionary.put(files[i], nodesContainingFile);       
+        } 
+        
+        
+        // display filedic
+        for (String key : fileDictionary.keySet()) {
+            System.out.println(key);
+        }
+       
+        
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
-        String[] split_msg = message.split(" ");
+        System.out.println(message);
+        String[] arr = message.split(";");
+        System.out.println(arr[0]);
+        String[] split_msg = arr[0].split(" ");
         int numOfNodes = split_msg.length - 2;
+        
+        String fileList = arr[1];
+        System.out.println("File LIst *************** " + fileList);
+        
+        // save files to fileDicationary
+        String[] records = fileList.split("\\|");
+        for(int i=0; i<records.length; i++){
+            if(records[i].length() < 2){
+                continue;
+            }
+            String[] a1 = records[i].split("\\=");
+            String fileName = a1[0];
+            if(a1.length < 2){continue;};
+            String[] nodes = a1[1].split(",");
+            
+            ArrayList<String> nodesContainingFile = this.fileDictionary.get(fileName);
+            if (nodesContainingFile == null) {
+                nodesContainingFile = new ArrayList<>();
+            }
+            for(int j=0; j< nodes.length; j++){
+                if(nodes.length <2){
+                    continue;
+                }
+                 nodesContainingFile.add(nodes[j]);
+            }           
+            this.fileDictionary.put(fileName, nodesContainingFile); 
+        }
+        
+        // display filedic
+        for (String key : fileDictionary.keySet()) {
+            System.out.println(key);
+        }
+        
         for (int i = 0; i < numOfNodes; i++) {
             String[] nodeDetails = split_msg[i + 2].split(":");
 
