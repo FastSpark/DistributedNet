@@ -802,21 +802,20 @@ public class ClientFrame extends javax.swing.JFrame {
         String result_string = "";
 
         //length SEROK no_files IP port hops filename1 filename2 ... ...
-        ArrayList<String> results = new ArrayList<String>();
-        Pattern p = Pattern.compile(".*\\\\b" + file_name + "\\\\b.*");
-        Set<String> keys = fileDictionary.keySet();
-        System.out.println(keys.isEmpty());
-        Iterator<String> iterator = keys.iterator();
-
-        while (iterator.hasNext()) {
-            String candidate = iterator.next();
-            Matcher m = p.matcher(candidate);
-            if (m.matches()) {
-                results.add(candidate);
-                result_string.concat(candidate + " ");
-            }
-        }
-        System.out.println(result_string);
+//        ArrayList<String> results = new ArrayList<String>();
+//        Pattern p = Pattern.compile(".*\\\\b" + file_name + "\\\\b.*");
+//        Set<String> keys = fileDictionary.keySet();
+//        Iterator<String> iterator = keys.iterator();
+//
+//        while (iterator.hasNext()) {
+//            String candidate = iterator.next();
+//            Matcher m = p.matcher(candidate);
+//            if (m.matches()) {
+//                results.add(candidate);
+//                result_string.concat(candidate + " ");
+//            }
+//        }
+//        System.out.println(result_string);
 
         String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + msg.split(" ")[1] + " 1";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;

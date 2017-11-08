@@ -84,6 +84,12 @@ public class ConnectFrame extends javax.swing.JFrame {
             }
         });
 
+        portText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                portTextActionPerformed(evt);
+            }
+        });
+
         connectButton.setText("Connect");
         connectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -223,6 +229,10 @@ public class ConnectFrame extends javax.swing.JFrame {
     private void ipTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ipTextActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_ipTextActionPerformed
+
+    private void portTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_portTextActionPerformed
+        connectButtonActionPerformed(evt);
+    }//GEN-LAST:event_portTextActionPerformed
 
     /**
      * @param args the command line arguments

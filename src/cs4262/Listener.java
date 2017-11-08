@@ -49,7 +49,7 @@ public class Listener implements Runnable {
             datagramSocket.receive(packet);
 
             String message = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Message Recieved : " + message);
+//            System.out.println("Message Recieved : " + message);
             //print  the details of incoming data - client ip : client port - client message
 //            System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
 
@@ -73,14 +73,15 @@ public class Listener implements Runnable {
                 case "LEAVE": // leave response message
                     clientFrame.handleLeave(message);
                     break;    
-                case "SEROK": // search response message
+                case "SEROK": // search response message                    
+                    System.out.println(message);
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok
-                    System.out.println(message);
+//                    System.out.println(message);
                     clientFrame.handleHeartBeatResponse(message);
                     break;
                 case "HEARTBEAT":
-                    System.out.println(message);
+//                    System.out.println(message);
                     clientFrame.sendHeartBeatReply(message);
                     break;
                 //this.client.
@@ -90,11 +91,7 @@ public class Listener implements Runnable {
                     break;
                 case "FBMOK": //reply to FBM
                     clientFrame.receiveReplyFindNodeFromBucket(message);
-                    break;
-             
-                    
-                    
-
+                    break;            
             }
         }
     }
