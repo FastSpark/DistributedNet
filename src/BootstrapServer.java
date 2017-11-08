@@ -1,4 +1,3 @@
-package cs4262;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

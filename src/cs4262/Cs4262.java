@@ -62,6 +62,8 @@ public class Cs4262 {
             //end of final variables
 
             //start of the input
+
+//            String ip = Inet4Address.getLocalHost().getHostAddress();
             String ip = Inet4Address.getLocalHost().getHostAddress();
 //            String ip = "192.168.43.252";
 //            int port = 80;
@@ -106,9 +108,9 @@ public class Cs4262 {
             Client client = new Client(k, myBucketId, ip, port, address, fileDictionary, myFileList, datagramSocket);
             client.initialize();
 
-            Thread thread = new Thread(new Listener(client));
-            thread.start();
-            Thread heartBeatThread = new Thread(new HeartBeatHandler(client));
+//            Thread thread = new Thread(new Listener(client));
+//            thread.start();
+//            Thread heartBeatThread = new Thread(new HeartBeatHandler(client));
 //            heartBeatThread.start();
             // } catch (UnknownHostException ex) {
             //   Logger.getLogger(Cs4262.class.getName()).log(Level.SEVERE, null, ex);
