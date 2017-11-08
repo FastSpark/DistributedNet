@@ -57,7 +57,6 @@ public class Listener implements Runnable {
              */
             String[] messagePart = message.split(" ");  
             String[] sentNode;
-            System.out.println(message);
             switch (messagePart[1]) {
                 case "REGOK":
                     //handle  response from bootstrap
