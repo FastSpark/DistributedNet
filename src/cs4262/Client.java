@@ -323,12 +323,14 @@ public class Client {
         String[] split = message.split(" ");
         String file_name= split[4];
         String result_string="";
+        String source_ip= split[2];
+        int source_port= Integer.parseInt(split[3]);
         
         int hop_count=0;
         if(split.length==6) 
             hop_count=Integer.valueOf(split[5]);
         
-        //length SEROK no_files IP port hops filename1 filename2 ... ...
+        //length SEROK tofind no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
         Pattern p = Pattern.compile("[a-zA-Z\\s]*"+file_name+"[a-zA-Z\\s]*");
         
@@ -349,9 +351,10 @@ public class Client {
             }
         }
         if(results.size()>0){
-            String ret_message= "SEROK "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
+            String ret_message= "SEROK "+file_name+" "+results.size()+" "+this.getIp()+" "+this.getPort()+" "+(hop_count++)+" "+result_string;
             ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
             System.out.println(ret_message);
+            unicast(ret_message, new Node(source_ip, source_port));
         }else{
             
             keys = fileDictionary.keySet();
