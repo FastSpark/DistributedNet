@@ -49,6 +49,7 @@ public class ClientFrame extends javax.swing.JFrame {
     private DatagramSocket datagramSocket;
 
     private DefaultTableModel filesTableModel;
+    private DefaultTableModel nodesTableModel;
     DefaultListModel<String> filesListModel;
     DefaultListModel<String> searchFilesResultListModel;
 
@@ -77,8 +78,11 @@ public class ClientFrame extends javax.swing.JFrame {
         this.timestamp = new Timestamp(System.currentTimeMillis());
         this.datagramSocket = datagramSocket;
 
-        filesTableModel = new DefaultTableModel();
+        filesTableModel = new DefaultTableModel(new String[]{"File Name", "Nodes List"}, 0);
         filesTable.setModel(filesTableModel);
+
+        nodesTableModel = new DefaultTableModel();
+        nodesTable.setModel(nodesTableModel);
 
         //set node properties
         ipLabel.setText(ip);
@@ -136,7 +140,7 @@ public class ClientFrame extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         jLabel10 = new javax.swing.JLabel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        nodesTable = new javax.swing.JTable();
         exitButton = new javax.swing.JButton();
         leaveButton = new javax.swing.JButton();
         refreshButton = new javax.swing.JButton();
@@ -338,7 +342,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         jLabel10.setText("Nodes in Network");
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        nodesTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -346,7 +350,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
             }
         ));
-        jScrollPane4.setViewportView(jTable2);
+        jScrollPane4.setViewportView(nodesTable);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -392,6 +396,11 @@ public class ClientFrame extends javax.swing.JFrame {
         });
 
         refreshButton.setText("Refresh");
+        refreshButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                refreshButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -583,6 +592,27 @@ public class ClientFrame extends javax.swing.JFrame {
         }
 
     }//GEN-LAST:event_leaveButtonActionPerformed
+
+    private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
+
+        System.out.println("action!!!");
+
+        for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
+            System.out.println("action!!!");
+            String filename = entry.getKey();
+            ArrayList<String> nodes = entry.getValue();
+
+            String nodesList = "";
+            for (String node : nodes) {
+                nodesList += (node + " ");
+            }
+            Object row[] = {filename, nodesList};
+            this.filesTableModel.addRow(row);
+        }
+        System.out.println("action end");
+
+
+    }//GEN-LAST:event_refreshButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -968,18 +998,18 @@ public class ClientFrame extends javax.swing.JFrame {
         for (int i = 0; i < this.myNodeList.size(); i++) {
             message += this.myNodeList.get(i).getIp() + ":" + Integer.toString(this.myNodeList.get(i).getPort());
         }
-                        
+
         // make fileDictionary string
         String FD = ";";
         for (String key : fileDictionary.keySet()) {
             ArrayList<String> nodesList = fileDictionary.get(key);
             FD += key + "=";
-            for(int i =0; i< nodesList.size(); i++){
+            for (int i = 0; i < nodesList.size(); i++) {
                 FD += nodesList.get(i) + ",";
             }
             FD += "|";
         }
-        
+
         message += FD;
 
         message = String.format("%04d", message.length() + 5) + " " + message;
@@ -999,22 +1029,19 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // get file list of that new node and store in fileDictionary
         String[] files = fileList.split(":");
-        for (int i=0; i<files.length; i++){
+        for (int i = 0; i < files.length; i++) {
             ArrayList<String> nodesContainingFile = this.fileDictionary.get(files[i]);
             if (nodesContainingFile == null) {
                 nodesContainingFile = new ArrayList<>();
             }
-            nodesContainingFile.add(fromNode.getIp() + ":" +  Integer.toString(fromNode.getPort()));
-            this.fileDictionary.put(files[i], nodesContainingFile);       
-        } 
-        
-        
+            nodesContainingFile.add(fromNode.getIp() + ":" + Integer.toString(fromNode.getPort()));
+            this.fileDictionary.put(files[i], nodesContainingFile);
+        }
+
         // display filedic
         for (String key : fileDictionary.keySet()) {
             System.out.println(key);
         }
-       
-        
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
@@ -1023,39 +1050,41 @@ public class ClientFrame extends javax.swing.JFrame {
         System.out.println(arr[0]);
         String[] split_msg = arr[0].split(" ");
         int numOfNodes = split_msg.length - 2;
-        
+
         String fileList = arr[1];
         System.out.println("File LIst *************** " + fileList);
-        
+
         // save files to fileDicationary
         String[] records = fileList.split("\\|");
-        for(int i=0; i<records.length; i++){
-            if(records[i].length() < 2){
+        for (int i = 0; i < records.length; i++) {
+            if (records[i].length() < 2) {
                 continue;
             }
             String[] a1 = records[i].split("\\=");
             String fileName = a1[0];
-            if(a1.length < 2){continue;};
+            if (a1.length < 2) {
+                continue;
+            };
             String[] nodes = a1[1].split(",");
-            
+
             ArrayList<String> nodesContainingFile = this.fileDictionary.get(fileName);
             if (nodesContainingFile == null) {
                 nodesContainingFile = new ArrayList<>();
             }
-            for(int j=0; j< nodes.length; j++){
-                if(nodes.length <2){
+            for (int j = 0; j < nodes.length; j++) {
+                if (nodes.length < 2) {
                     continue;
                 }
-                 nodesContainingFile.add(nodes[j]);
-            }           
-            this.fileDictionary.put(fileName, nodesContainingFile); 
+                nodesContainingFile.add(nodes[j]);
+            }
+            this.fileDictionary.put(fileName, nodesContainingFile);
         }
-        
+
         // display filedic
         for (String key : fileDictionary.keySet()) {
             System.out.println(key);
         }
-        
+
         for (int i = 0; i < numOfNodes; i++) {
             String[] nodeDetails = split_msg[i + 2].split(":");
 
@@ -1121,8 +1150,8 @@ public class ClientFrame extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTable jTable2;
     private javax.swing.JButton leaveButton;
+    private javax.swing.JTable nodesTable;
     private javax.swing.JLabel portLabel;
     private javax.swing.JButton refreshButton;
     private javax.swing.JButton searchButton;
