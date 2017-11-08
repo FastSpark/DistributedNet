@@ -5,6 +5,8 @@
  */
 package client;
 
+import cs4262.HeartBeatHandler;
+import cs4262.Listener;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -31,15 +33,25 @@ public class ConnectFrame extends javax.swing.JFrame {
      * Creates new form ConnectFrame
      */
     public ConnectFrame() {
-        initComponents();
-
         try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+            initComponents();
+
             ipText.setText(Inet4Address.getLocalHost().getHostAddress());
             portText.requestFocus();
 
             this.setLocationRelativeTo(null);
-
+            this.setVisible(true);
         } catch (UnknownHostException ex) {
+            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InstantiationException ex) {
+            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedLookAndFeelException ex) {
             Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
@@ -155,18 +167,18 @@ public class ConnectFrame extends javax.swing.JFrame {
                 "American Idol",
                 "Hacking for Dummies"
             };
-            
+
             //get connection parameters
             String ip = ipText.getText();
-            String port = portText.getText();
+            int port = Integer.parseInt(portText.getText());
 
-            String username = ip + ":" + port;          
+            String username = ip + ":" + port;
             int myBucketId = Math.abs(username.hashCode());
             myBucketId = myBucketId % k;
-           
+
             String msg = " REG " + ip + " " + port + " " + username;
             msg = "00" + Integer.toString(msg.length()) + msg;
-            
+
             //set files details           
             Map<String, ArrayList<String>> fileDictionary = new HashMap<>();
 
@@ -185,29 +197,25 @@ public class ConnectFrame extends javax.swing.JFrame {
                 }
                 nodesContainingFile.add(username);
                 fileDictionary.put(selectedFile, nodesContainingFile);
-            }     
+            }
 
             //create datagram connection
             DatagramPacket datagramPacket = new DatagramPacket(msg.getBytes(), msg.getBytes().length, InetAddress.getByName(ip), 55555);
-            DatagramSocket datagramSocket = new DatagramSocket(Integer.parseInt(port));
+            DatagramSocket datagramSocket = new DatagramSocket(port);
             datagramSocket.send(datagramPacket);
 
             this.setVisible(false);
             ClientFrame cf = new ClientFrame(k, myBucketId, ip, port, username, fileDictionary, myFileList, datagramSocket);
             cf.setLocationRelativeTo(null);
-            cf.setVisible(true);
-            
-//             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
+            Thread thread = new Thread(new Listener(cf));
+            thread.start();
+
+            Thread heartBeatThread = new Thread(new HeartBeatHandler(cf));
+            heartBeatThread.start();
+
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Error connecting to the Bootstrap Server", "Error", JOptionPane.ERROR_MESSAGE);
-//        } catch (ClassNotFoundException ex) {
-//            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (InstantiationException ex) {
-//            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (IllegalAccessException ex) {
-//            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
-//        } catch (UnsupportedLookAndFeelException ex) {
-//            Logger.getLogger(ConnectFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }//GEN-LAST:event_connectButtonActionPerformed

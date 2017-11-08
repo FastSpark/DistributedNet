@@ -5,6 +5,7 @@
  */
 package cs4262;
 
+import client.ClientFrame;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -17,27 +18,27 @@ import java.util.logging.Logger;
  */
 public class Listener implements Runnable {
 
-    Client client;
+    ClientFrame clientFrame;
 
-    Listener(Client client) {
-        this.client = client;
+    public Listener(ClientFrame clientFrame) {
+        this.clientFrame = clientFrame;
     }
 
     @Override
     public void run() {
         try {
-            listen(this.client); //To change body of generated methods, choose Tools | Templates.
+            listen(this.clientFrame); //To change body of generated methods, choose Tools | Templates.
         } catch (IOException | ClassNotFoundException ex) {
             Logger.getLogger(Listener.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void listen(Client client) throws IOException, ClassNotFoundException {
+    public void listen(ClientFrame clientFrame) throws IOException, ClassNotFoundException {
         // Port number to bind server to.
-        int portNum = client.getPort();
+        int portNum = clientFrame.getPort();
 
         // Socket for server to listen at.
-        DatagramSocket datagramSocket = client.getDatagramSocket();
+        DatagramSocket datagramSocket = clientFrame.getDatagramSocket();
         System.out.println("Now listening to port: " + portNum);
         byte[] buffer;
         DatagramPacket packet;
@@ -60,7 +61,7 @@ public class Listener implements Runnable {
                 case "REGOK":
                     //handle  response from bootstrap
                     System.out.println(message);
-                    this.client.handleRegisterResponse(message);
+                    clientFrame.handleRegisterResponse(message);
                     break;
                 case "UNROK": // handle unregister response
                     break;
@@ -72,19 +73,19 @@ public class Listener implements Runnable {
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok
                     System.out.println(message);
-                    this.client.handleHeartBeatResponse(message);
+                    clientFrame.handleHeartBeatResponse(message);
                     break;
                 case "HEARTBEAT":
-                     System.out.println(message);
-                     this.client.sendHeartBeatReply(message);
-                     break;
-                     //this.client.
+                    System.out.println(message);
+                    clientFrame.sendHeartBeatReply(message);
+                    break;
+                //this.client.
                 case "FBM": //multicast message to find a node from a bucket
                     System.out.println(message);
-                    this.client.findNodeFromBucketReply(Integer.parseInt(messagePart[2]),new Node(client.getIp(), client.getPort()));
+                    clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(clientFrame.getIp(), clientFrame.getPort()));
                     break;
                 case "FBMOK": //reply to FBM
-                    this.client.receiveReplyFindNodeFromBucket(message);
+                    clientFrame.receiveReplyFindNodeFromBucket(message);
                     break;
 
             }

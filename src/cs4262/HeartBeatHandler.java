@@ -4,6 +4,8 @@
  * and open the template in the editor.
  */
 package cs4262;
+
+import client.ClientFrame;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.util.Set;
@@ -14,36 +16,36 @@ import java.util.logging.Logger;
  *
  * @author nuwantha
  */
-public class HeartBeatHandler implements Runnable{
+public class HeartBeatHandler implements Runnable {
+
     private DatagramSocket ds;
-    private Client client;
-    public HeartBeatHandler(Client client){
-        this.client=client;
+    private ClientFrame clientFrame;
+
+    public HeartBeatHandler(ClientFrame clientFrame) {
+        this.clientFrame = clientFrame;
     }
-    
+
     @Override
     public void run() {
         while (true) {
             try {
                 sendHeartBeat();
                 Thread.sleep(100);
-                client.updateRountingTable();
+                this.clientFrame.updateRountingTable();
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
-
         }
-        
     }
 
     //send Heartbeat to other nodes
-    public void sendHeartBeat() throws IOException{
-        String message="HEARTBEAT "+client.getIp()+" "+client.getPort();
+    public void sendHeartBeat() throws IOException {
+        String message = "HEARTBEAT " + this.clientFrame.getIp() + " " + this.clientFrame.getPort();
         message = String.format("%04d", message.length() + 5) + " " + message;
-        client.multicast(message, client.getMyNodeList());
-        Set<Integer> keySet = client.getBucketTable().keySet();
+        this.clientFrame.multicast(message, this.clientFrame.getMyNodeList());
+        Set<Integer> keySet = this.clientFrame.getBucketTable().keySet();
         for (int key : keySet) {
-            client.unicast(message, client.getBucketTable().get(key));
+            this.clientFrame.unicast(message, this.clientFrame.getBucketTable().get(key));
         }
     }
 }
