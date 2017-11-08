@@ -49,7 +49,7 @@ public class Listener implements Runnable {
             datagramSocket.receive(packet);
 
             String message = new String(packet.getData(), 0, packet.getLength());
-//            System.out.println("Message Recieved : " + message);
+            System.out.println("Message Recieved : " + message);
             //print  the details of incoming data - client ip : client port - client message
 //            System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
 
@@ -92,11 +92,11 @@ public class Listener implements Runnable {
                 //this.client.
                 case "FBM": //multicast message to find a node from a bucket
                     System.out.println(message);
-                    sentNode = messagePart[3].split(":");
+                    sentNode = messagePart[3].split("\\:");
                     this.clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(sentNode[0], Integer.valueOf(sentNode[1])));
                     break;
                 case "FBMOK": //reply to FBM
-                    clientFrame.receiveReplyFindNodeFromBucket(message);
+                    this.clientFrame.receiveReplyFindNodeFromBucket(message);
                     break;
                 case "FNL": // unicast message to find myNodeList from node
                     System.out.println(message);

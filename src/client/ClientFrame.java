@@ -732,6 +732,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
         //FBMOK: Find Bucket Member OK
+        System.out.println("Finding NOde !!!!");
         Node nodeFromBucket = null;
         String message = null;
         if (bucketTable.get(bucketId) != null) {
@@ -741,6 +742,7 @@ public class ClientFrame extends javax.swing.JFrame {
             message = "FBMOK " + bucketId + " null null";
         }
         message = String.format("%04d", message.length() + 5) + " " + message;
+        System.out.println(fromNode.getIp() + fromNode.getPort());
         unicast(message, fromNode);
     }
 
@@ -993,7 +995,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
         System.out.println(message);
-        String[] arr = message.split(";");
+        String[] arr = message.split("\\;");
         System.out.println(arr[0]);
         String[] split_msg = arr[0].split(" ");
         int numOfNodes = split_msg.length - 2;
@@ -1031,7 +1033,7 @@ public class ClientFrame extends javax.swing.JFrame {
         }
         
         for (int i = 0; i < numOfNodes; i++) {
-            String[] nodeDetails = split_msg[i + 2].split(":");
+            String[] nodeDetails = split_msg[i + 2].split("\\:");
 
             Boolean isAlreadyInMyNodeList = false;
             // ignore if it's already in myNodeList
