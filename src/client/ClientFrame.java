@@ -5,6 +5,7 @@
  */
 package client;
 
+import cs4262.Client;
 import cs4262.Node;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -589,13 +590,13 @@ public class ClientFrame extends javax.swing.JFrame {
         });
     }
 
-    private void storeNode(String ip, String port) {
+    private void storeNode(String ip, String port) throws IOException {
         Node newNode = new Node(ip, Integer.parseInt(port));
-        int bucketId = (ip + ":" + port).hashCode() % k;
+        int bucketId = Math.abs((ip + ":" + port).hashCode()) % k;
+        bucketTable.put(bucketId, newNode);
         if (bucketId == this.myBucketId) {
-            myNodeList.add(newNode);
-        } else {
-            bucketTable.put(bucketId, newNode);
+            // request myNodeList from that node 
+             this.findMyNodeListFromNode(newNode);
         }
     }
 
@@ -613,16 +614,45 @@ public class ClientFrame extends javax.swing.JFrame {
         switch (arr[2]) {
             case "0":
                 System.out.println("You are the first node, registered successfully with BS!");
-                // change up the "status" to ready (1) ????
+                this.displayRoutingTable();
+                this.status = "1";
                 break;
             case "1":
                 storeNode(arr[3], arr[4]);
-                // change up the "status" to ready (1) ????
+                this.displayRoutingTable();
+                this.status = "1";
                 break;
             case "2":
                 storeNode(arr[3], arr[4]);
                 storeNode(arr[5], arr[6]);
-                // change up the "status" to ready (1) ????
+
+                // complete bucketTable (including my own bucket if it's empty)
+                for (int i = 0; i < k; i++) {
+                    if (!bucketTable.containsKey(i)) {
+                        findNodeFromBucket(i);
+                    }
+                }
+
+                // time out to complete receiving replies for findNodeFromBucket
+                try {
+                    Thread.sleep(8000);  // Tune this
+
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                if (!bucketTable.containsKey(this.myBucketId)) { // if I'm only the node in my bucket no need to wait for myNodeList to populate
+                    System.out.println("I'm the only node in my bucket");
+                    this.displayRoutingTable();
+                    this.status = "1";
+                } else if (this.myNodeList.size() == 1) { // if heven't receive a node in same bucket and haven't called findMyNodeListFromNode inside storeNode method
+                    // request myNodeList from bucketTable.get(this.myBucketId)
+                    this.findMyNodeListFromNode(this.bucketTable.get(this.myBucketId));
+                }
+//                System.out.println("###################");
+//                this.displayRoutingTable();
+//                this.status = "1";
+
                 break;
             case "9999":
                 System.out.println("failed, there is some error in the command");
@@ -645,49 +675,19 @@ public class ClientFrame extends javax.swing.JFrame {
                 JOptionPane.showMessageDialog(this, "Failed, can't register. BS is full", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(JFrame.EXIT_ON_CLOSE);
             default:
-                // store FIRST 2 nodes' details
-                storeNode(arr[3], arr[4]);
-                storeNode(arr[5], arr[6]);
-
-                // complete bucketTable
-                for (int i = 0; i < k; i++) {
-
-                    if (!bucketTable.containsKey(i)) {
-//                        findNodeFromBucket(i);   //handle exceptions
-                    }
-                }
-
-                // complete myNodeList    
-                if (myNodeList.isEmpty()) {
-                    // findNodeFromBucket(myBucketId);
-                    // send message to that returned node to get it's myNodeList and then store
-                } else {
-                    // send message to that node to get it's myNodeList and then store
-                }
-
-                // change up the "status" to ready (1)
                 break;
         }
-//        while (true) {
-//            System.out.println("");
-//            System.out.print("Input Next Command : ");
-//
-//            msg = scanner.nextLine();
-//            switch (msg) {
-//                case "DISPLAY FILES":
-//                    displayFiles();
-//                    break;
-//                case "DISPLAY TABLE":
-//                    displayRoutingTable();
-//                    break;
-//                case "SEARCH FILES":
-//                    searchFiles(msg);
-//                    break;
-//                default:
-//                    break;
-//            }
-//        }
-//        connectWithNodes();
+    }
+
+    public void findMyNodeListFromNode(Node node) throws UnknownHostException, IOException {
+        String fileList = " ";
+        for (int i = 0; i < this.myFileList.size(); i++) {
+            fileList += myFileList.get(i) + ":";
+        }
+        //FNL: Find Node List
+        String message = "FNL" + " " + this.ip + ":" + Integer.toString(this.port) + fileList;
+        message = String.format("%04d", message.length() + 5) + " " + message;
+        unicast(message, node);
     }
 
     private void connectWithNodes() {
@@ -737,7 +737,7 @@ public class ClientFrame extends javax.swing.JFrame {
         String message = null;
         if (bucketTable.get(bucketId) != null) {
             nodeFromBucket = bucketTable.get(bucketId);
-            message = "FBMOK " + bucketId + "" + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
+            message = "FBMOK " + bucketId + " " + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
         } else {
             message = "FBMOK " + bucketId + " null null";
         }
@@ -746,11 +746,20 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
-
+       
         String[] split_msg = message.split(" ");
+        if("null".equals(split_msg[3])){
+            return;
+        }
         Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
-        if (this.getBucketTable().get(split_msg[2]) != null) {
-            this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+
+        this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
+       
+
+        // Node is still initializing and the returned node is a node from my bucket
+        if(this.status.equals("0") && split_msg[2].equals(this.myBucketId)){
+            // request myNodeList from that node
+            this.findMyNodeListFromNode(bucket_node);
         }
     }
 
@@ -791,9 +800,18 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
         //FBM: Find Bucket Member 0011 FBM 01
-        String message = "FBM " + bucketId;
+        String message = "FBM " + bucketId + " " + this.ip + ":" + Integer.toString(this.port);
         message = String.format("%04d", message.length() + 5) + " " + message;
+        
+        // request from available my nodes
         multicast(message, myNodeList);
+        
+        // request from nodes from other buckets
+        for(int i =0; i< k; i++){
+            if(this.bucketTable.containsKey(i) && i != this.myBucketId){
+                unicast(message, this.bucketTable.get(i));
+            }
+        }
     }
 
     public void initializeSearch(String msg) throws IOException {
@@ -816,7 +834,6 @@ public class ClientFrame extends javax.swing.JFrame {
 //            }
 //        }
 //        System.out.println(result_string);
-
         String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + msg.split(" ")[1] + " 1";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
@@ -917,6 +934,71 @@ public class ClientFrame extends javax.swing.JFrame {
             if (neighbour.getIp() == ip && neighbour.getPort() == port) {
                 bucketTable.remove(key);
                 this.findNodeFromBucket(key);
+            }
+        }
+    }
+
+    public void findMyNodeListFromNodeReply(Node fromNode) throws UnknownHostException, IOException {
+        String message = "FNLOK ";
+        for (int i = 0; i < this.myNodeList.size(); i++) {
+            message += this.myNodeList.get(i).getIp() + ":" + Integer.toString(this.myNodeList.get(i).getPort()) + " ";
+        }
+        message = String.format("%04d", message.length() + 5) + " " + message;
+        unicast(message, fromNode);
+
+        // add that new node to myNodeList
+        Boolean isAlreadyInMyNodeList = false;
+        // ignore if it's already in myNodeList
+        for (int j = 0; j < myNodeList.size(); j++) {
+            if (myNodeList.get(j).getIp().equals(fromNode.getIp()) && myNodeList.get(j).getPort() == fromNode.getPort()) {
+                isAlreadyInMyNodeList = true;
+            }
+        }
+        if (!isAlreadyInMyNodeList) {
+            this.myNodeList.add(fromNode);
+        }
+
+        // get file list of that new node and store in fileDictionary
+    }
+
+    public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
+        String[] split_msg = message.split(" ");
+        int numOfNodes = split_msg.length - 2;
+        for (int i = 0; i < numOfNodes; i++) {
+            String[] nodeDetails = split_msg[i + 2].split(":");
+
+            Boolean isAlreadyInMyNodeList = false;
+            // ignore if it's already in myNodeList
+            for (int j = 0; j < myNodeList.size(); j++) {
+                if (myNodeList.get(j).getIp().equals(nodeDetails[0]) && myNodeList.get(j).getPort() == Integer.valueOf(nodeDetails[1])) {
+                    isAlreadyInMyNodeList = true;
+                }
+            }
+            if (!isAlreadyInMyNodeList) {
+                Node nodeInList = new Node(nodeDetails[0], Integer.valueOf(nodeDetails[1]));
+                this.myNodeList.add(nodeInList);
+            }
+        }
+        this.displayRoutingTable();
+        this.status = "1";
+    }
+
+    public void displayRoutingTable() {
+        if (myNodeList.isEmpty() && bucketTable.isEmpty()) {
+            System.out.println("Tables are empty");
+        } else {
+            System.out.println("Nodes list in the Bucket:");
+            for (Node node : myNodeList) {
+                System.out.println("\t" + node.getIp() + ":" + node.getPort());
+            }
+
+            System.out.println("Nodes list from other Buckets:");
+            Iterator entries = bucketTable.entrySet().iterator();
+            while (entries.hasNext()) {
+                Map.Entry entry = (Map.Entry) entries.next();
+                Integer key = (Integer) entry.getKey();
+                Node node = (Node) entry.getValue();
+                System.out.println("Bucket " + key + " : " + node.getIp() + ":" + node.getPort());
             }
         }
     }

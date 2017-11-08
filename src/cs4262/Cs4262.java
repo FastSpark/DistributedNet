@@ -77,8 +77,9 @@ public class Cs4262 {
 
             //start of creating connection details
             String address = ip + ":" + port;
-            int myBucketId = address.hashCode();
+            int myBucketId = Math.abs(address.hashCode());
             myBucketId = myBucketId % k;
+            System.out.println("Bucket Id: " + myBucketId);
             //end of getting connection details
 
             //start of initializing files (3 to 5)

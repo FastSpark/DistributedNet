@@ -57,6 +57,7 @@ public class Listener implements Runnable {
             message type
              */
             String[] messagePart = message.split(" ");
+            String[] sentNode;
             switch (messagePart[1]) {
                 case "REGOK":
                     //handle  response from bootstrap
@@ -72,7 +73,11 @@ public class Listener implements Runnable {
                     break;
                 case "LEAVE": // leave response message
                     clientFrame.handleLeave(message);
-                    break;    
+                    break;
+                case "SER":
+                    System.out.println(message);
+                    this.clientFrame.searchFiles(message);
+                    break;
                 case "SEROK": // search response message                    
                     System.out.println(message);
                     break;
@@ -87,11 +92,20 @@ public class Listener implements Runnable {
                 //this.client.
                 case "FBM": //multicast message to find a node from a bucket
                     System.out.println(message);
-                    clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(clientFrame.getIp(), clientFrame.getPort()));
+                    sentNode = messagePart[3].split(":");
+                    this.clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(sentNode[0], Integer.valueOf(sentNode[1])));
                     break;
                 case "FBMOK": //reply to FBM
                     clientFrame.receiveReplyFindNodeFromBucket(message);
-                    break;            
+                    break;
+                case "FNL": // unicast message to find myNodeList from node
+                    System.out.println(message);
+                    sentNode = messagePart[2].split(":");
+                    this.clientFrame.findMyNodeListFromNodeReply(new Node(sentNode[0], Integer.valueOf(sentNode[1])));
+                    break;
+                case "FNLOK": //reply to FNL
+                    this.clientFrame.receiveReplyfindMyNodeListFromNode(message);
+                    break;
             }
         }
     }
