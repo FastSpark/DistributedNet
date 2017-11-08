@@ -326,8 +326,9 @@ public class Client {
         int hop_count=0;
         if(split.length==6) 
             hop_count=Integer.valueOf(split[5]);
-        
+
         //length SEROK no_files IP port hops filename1 filename2 ... ...
+        
         ArrayList<String> results = new ArrayList<String>();
         Pattern p = Pattern.compile("[a-zA-Z]*["+file_name+"][a-zA-Z]*");
         Set<String> keys = fileDictionary.keySet();
@@ -360,7 +361,7 @@ public class Client {
         String message = null;
         if (bucketTable.get(bucketId) != null) {
             nodeFromBucket = bucketTable.get(bucketId);
-            message = "FBMOK " + bucketId + "" + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
+            message = "FBMOK " + bucketId + " " + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
         } else {
             message = "FBMOK " + bucketId + " null null";
         }
@@ -394,28 +395,114 @@ public class Client {
     }
 
     //gracefull leave
-    public void leave(int bucketId) throws IOException {
-        String message = "LEAVING BUCKET " + bucketId;
-        multicast(message, myNodeList);
+    //send leave message to bootrap server
+    public void leave() throws IOException {        
+        
+        String message = "LEAVE "+this.getIp()+" "+this.getPort();
+        message = String.format("%04d", message.length() + 5) + " " + message;
+        sendMessage(message);
+    
     }
+    
+    // handle leave ok from bootrap server
+    public void handleLeaveOk(String message) throws UnknownHostException, IOException{
 
-    public void updateRountingTable() throws IOException {
-        ArrayList<Node> temNodeList = new ArrayList<Node>();
-        for (Node node : myNodeList) {
-            if (timestamp.getTime() - node.getTimeStamp() < 5000) {
-                temNodeList.add(node);
-            }
+        int messageType = Integer.parseInt(message.split(" ")[2]);
+        if(messageType==0){
+            String sendMeessage = "LEAVE "+this.getIp()+" "+this.getPort();
+            message = String.format("%04d", sendMeessage.length() + 5) + " " + sendMeessage;
+            multicast(sendMeessage,myNodeList);
+        }else if(messageType==9999){
+            System.out.println("error while adding new node to routing table");
         }
-        this.myNodeList = temNodeList;
-
+        
+    }
+    
+    public void handleLeave(String message) throws UnknownHostException, IOException{
+        String[] splitMesseageList= message.split(" ");
+        String ip = splitMesseageList[2];
+        int port=Integer.parseInt(splitMesseageList[3]);
+        // leave wena eka nodelist eken ain karan ona eke ekek nm.
+        ArrayList<Node> tem= new ArrayList<>();
+        for (Node node : myNodeList) {
+            if(!node.getIp().equals(ip) && node.getPort()!=port){
+                tem.add(node);
+            }else{
+                for(String file:fileDictionary.keySet()){
+                    ArrayList<String> temFileNodeList = new ArrayList<String>();
+                    for (String username : fileDictionary.get(file)) {
+                        String[] split = username.split(":");
+                        String temIp =split[0];
+                        int temPort=Integer.parseInt(split[1]);
+                        if(temIp!=ip && temPort!=port){
+                           temFileNodeList.add(username);
+                        }
+                    }
+                    fileDictionary.replace(file,temFileNodeList);
+               }
+            }     
+        }
         for (int key : bucketTable.keySet()) {
-
             Node neighbour = bucketTable.get(key);
-            if (timestamp.getTime() - neighbour.getTimeStamp() > 5000) {
+            if (neighbour.getIp()==ip && neighbour.getPort()==port) {
                 bucketTable.remove(key);
                 this.findNodeFromBucket(key);
             }
         }
+    
+    }
+    
+    
+
+    public void updateRountingTable() throws IOException {
+        ArrayList<Node> temNodeList = new ArrayList<>();
+        for (Node node : myNodeList) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 5000) {
+                temNodeList.add(node);
+            }else{
+                for(String file:fileDictionary.keySet()){
+                    ArrayList<String> temFileNodeList = new ArrayList<String>();
+                    for (String username : fileDictionary.get(file)) {
+                        String[] split = username.split(":");
+                        String ip =split[0];
+                        int port=Integer.parseInt(split[1]);
+                        if(ip!=node.getIp() && port!=node.getPort() ){
+                            temFileNodeList.add(username);
+                        }
+
+                    }
+                    fileDictionary.replace(file,temFileNodeList);
+               }   
+            
+            }
+        }
+
+        System.out.println("myNodeList "+myNodeList.size());
+        System.out.println("myTemList "+temNodeList.size());
+        this.myNodeList = temNodeList;
+        for (int key : bucketTable.keySet()) {
+            Node neighbour = bucketTable.get(key);
+            System.out.println("time now"+new Timestamp(System.currentTimeMillis()).getTime());
+            System.out.println("neighour time :"+neighbour.getTimeStamp());
+            System.out.println("time to response in bucket table "+(new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 5000) {
+                System.out.println("time to response in bucket table "+(timestamp.getTime() - neighbour.getTimeStamp()));
+                System.out.println("before remove"+bucketTable.keySet());
+                bucketTable.remove(key);
+                System.out.println("after remove"+bucketTable.keySet());
+                this.findNodeFromBucket(key);
+            }
+            
+        }
+        // if my bucket table does not have connect ti some bucket we need to update that
+        Set<Integer> keySet = bucketTable.keySet();
+        for(int i=0; i< this.k; i++){
+            if(!keySet.contains(i) && i !=this.myBucketId ){
+                this.findNodeFromBucket(i);
+            }
+        }
+        
+        displayRoutingTable();
 
     }
 
@@ -428,7 +515,7 @@ public class Client {
         int port = Integer.parseInt(splitMessage[3]);
         for (Node node : myNodeList) {
             if (node.getIp().equals(ip) && node.getPort() == port) {
-                node.setTimeStamp(timestamp.getTime());
+                node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
                 is_Change = true;
             }
             temNodeList.add(node);
@@ -439,13 +526,12 @@ public class Client {
             for (int key : bucketTable.keySet()) {
                 Node node = bucketTable.get(key);
                 if (node.getIp().equals(ip) && node.getPort() == port) {
-                    node.setTimeStamp(timestamp.getTime());
+                    node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
                     bucketTable.replace(key, node);
                 }
             }
         }
     }
-    
     public void sendHeartBeatReply(String message) throws IOException{
         String newMessage="HEARTBEATOK "+this.getIp()+" "+this.getPort();
         newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
@@ -453,5 +539,4 @@ public class Client {
         Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
         unicast(newMessage, node);    
     }
-    
 }

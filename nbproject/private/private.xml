@@ -6,8 +6,11 @@
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Message.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Neighbour.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Node.java</file>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/HeartBeatHandler.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Cs4262.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Listener.java</file>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Client.java</file>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/BootstrapServer.java</file>
         </group>
     </open-files>
 </project-private>
