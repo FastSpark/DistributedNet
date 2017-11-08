@@ -50,6 +50,10 @@ public class ClientFrame extends javax.swing.JFrame {
     private DatagramSocket datagramSocket;
 
     private DefaultTableModel filesTableModel;
+    DefaultListModel<String> filesListModel;
+    DefaultListModel<String> searchFilesResultListModel;
+
+    private String currentSearch;
 
     /**
      * Creates new form ClientFrame
@@ -86,11 +90,14 @@ public class ClientFrame extends javax.swing.JFrame {
 
         bucketIDLabel.setText(myBucketId + "");
 
-        DefaultListModel<String> model = new DefaultListModel<>();
-        fileList.setModel(model);
+        filesListModel = new DefaultListModel<>();
+        fileList.setModel(filesListModel);
         for (String string : myFileList) {
-            model.addElement(string);
+            filesListModel.addElement(string);
         }
+
+        searchFilesResultListModel = new DefaultListModel<>();
+        searchFilesResultList.setModel(searchFilesResultListModel);
     }
 
     /**
@@ -122,7 +129,7 @@ public class ClientFrame extends javax.swing.JFrame {
         searchButton = new javax.swing.JButton();
         commandLabel = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jList1 = new javax.swing.JList<>();
+        searchFilesResultList = new javax.swing.JList<>();
         jLabel9 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -133,6 +140,7 @@ public class ClientFrame extends javax.swing.JFrame {
         jTable2 = new javax.swing.JTable();
         exitButton = new javax.swing.JButton();
         leaveButton = new javax.swing.JButton();
+        refreshButton = new javax.swing.JButton();
 
         jLabel8.setText("File Name:");
 
@@ -247,7 +255,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         commandLabel.setText(" ");
 
-        jScrollPane1.setViewportView(jList1);
+        jScrollPane1.setViewportView(searchFilesResultList);
 
         jLabel9.setText("Results:");
 
@@ -384,17 +392,19 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         });
 
+        refreshButton.setText("Refresh");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(leaveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -409,7 +419,8 @@ public class ClientFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(leaveButton, javax.swing.GroupLayout.DEFAULT_SIZE, 37, Short.MAX_VALUE)
-                    .addComponent(exitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(exitButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(refreshButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
 
@@ -422,6 +433,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         if (!filename.isEmpty()) {
             String searchString = "SEARCH_FILES " + filename;
+            this.currentSearch = filename;
 
             try {
                 System.out.println("Initialize Search for: " + searchString);
@@ -434,7 +446,7 @@ public class ClientFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void filenameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filenameTextActionPerformed
-
+        searchButtonActionPerformed(evt);
     }//GEN-LAST:event_filenameTextActionPerformed
 
     private void filenameTextKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_filenameTextKeyTyped
@@ -451,6 +463,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
     private void exitButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitButtonActionPerformed
 
+        int res = JOptionPane.showConfirmDialog(this, "Exit the Application?", "Confirm", JOptionPane.YES_NO_OPTION);
+
+        if (res == JOptionPane.YES_OPTION) {
+            System.exit(0);
+        }
 
     }//GEN-LAST:event_exitButtonActionPerformed
 
@@ -552,6 +569,19 @@ public class ClientFrame extends javax.swing.JFrame {
 
     private void leaveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_leaveButtonActionPerformed
 
+        int res = JOptionPane.showConfirmDialog(this, "Leave the Bootstrap Server?", "Confirm", JOptionPane.YES_NO_OPTION);
+
+        if (res == JOptionPane.YES_OPTION) {
+            String message = "LEAVE " + this.getIp() + " " + this.getPort();
+            message = String.format("%04d", message.length() + 5) + " " + message;
+
+            try {
+                DatagramPacket dp = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(this.ip), 55555);
+                this.datagramSocket.send(dp);
+            } catch (IOException ex) {
+                Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
     }//GEN-LAST:event_leaveButtonActionPerformed
 
@@ -596,7 +626,7 @@ public class ClientFrame extends javax.swing.JFrame {
         bucketTable.put(bucketId, newNode);
         if (bucketId == this.myBucketId) {
             // request myNodeList from that node 
-             this.findMyNodeListFromNode(newNode);
+            this.findMyNodeListFromNode(newNode);
         }
     }
 
@@ -632,7 +662,6 @@ public class ClientFrame extends javax.swing.JFrame {
                         findNodeFromBucket(i);
                     }
                 }
-
                 // time out to complete receiving replies for findNodeFromBucket
                 try {
                     Thread.sleep(8000);  // Tune this
@@ -652,28 +681,27 @@ public class ClientFrame extends javax.swing.JFrame {
 //                System.out.println("###################");
 //                this.displayRoutingTable();
 //                this.status = "1";
-
                 break;
             case "9999":
                 System.out.println("failed, there is some error in the command");
                 JOptionPane.showMessageDialog(this, "Failed, there is some error in the command", "Error", JOptionPane.ERROR_MESSAGE);
-                System.exit(JFrame.EXIT_ON_CLOSE);
+                System.exit(0);
                 break;
             case "9998":
                 System.out.println("failed, already registered! attempting unregister first");
                 JOptionPane.showMessageDialog(this, "Failed, already registered! attempting unregister first", "Error", JOptionPane.ERROR_MESSAGE);
-                System.exit(JFrame.EXIT_ON_CLOSE);
+                System.exit(0);
                 break;
             case "9997":
                 System.out.println("failed, registered to another user, try a different IP and port");
                 JOptionPane.showMessageDialog(this, "Failed, registered to another user, try a different IP and port", "Error", JOptionPane.ERROR_MESSAGE);
-                System.exit(JFrame.EXIT_ON_CLOSE);
+                System.exit(0);
                 // TODO
                 break;
             case "9996":
                 System.out.println("failed, can't register. BS full.");
                 JOptionPane.showMessageDialog(this, "Failed, can't register. BS is full", "Error", JOptionPane.ERROR_MESSAGE);
-                System.exit(JFrame.EXIT_ON_CLOSE);
+                System.exit(0);
             default:
                 break;
         }
@@ -746,18 +774,17 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void receiveReplyFindNodeFromBucket(String message) throws UnknownHostException, IOException {
-       
+
         String[] split_msg = message.split(" ");
-        if("null".equals(split_msg[3])){
+        if ("null".equals(split_msg[3])) {
             return;
         }
         Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
 
         this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
-       
 
         // Node is still initializing and the returned node is a node from my bucket
-        if(this.status.equals("0") && split_msg[2].equals(this.myBucketId)){
+        if (this.status.equals("0") && split_msg[2].equals(this.myBucketId)) {
             // request myNodeList from that node
             this.findMyNodeListFromNode(bucket_node);
         }
@@ -802,13 +829,13 @@ public class ClientFrame extends javax.swing.JFrame {
         //FBM: Find Bucket Member 0011 FBM 01
         String message = "FBM " + bucketId + " " + this.ip + ":" + Integer.toString(this.port);
         message = String.format("%04d", message.length() + 5) + " " + message;
-        
+
         // request from available my nodes
         multicast(message, myNodeList);
-        
+
         // request from nodes from other buckets
-        for(int i =0; i< k; i++){
-            if(this.bucketTable.containsKey(i) && i != this.myBucketId){
+        for (int i = 0; i < k; i++) {
+            if (this.bucketTable.containsKey(i) && i != this.myBucketId) {
                 unicast(message, this.bucketTable.get(i));
             }
         }
@@ -868,9 +895,10 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
         if (results.size() > 0) {
-            String ret_message = "SEROK " + results.size() + " " + this.getIp() + " " + this.getPort() + " " + (hop_count++) + " " + result_string;
+            String ret_message = "SEROK " + file_name + " " + results.size() + " " + this.getIp() + " " + this.getPort() + " " + (hop_count++) + " " + result_string;
             ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
             System.out.println(ret_message);
+            handleSearchFilesResponse(ret_message);
         } else {
             keys = fileDictionary.keySet();
             iterator = keys.iterator();
@@ -893,7 +921,6 @@ public class ClientFrame extends javax.swing.JFrame {
 
     // handle leave ok from bootrap server
     public void handleLeaveOk(String message) throws UnknownHostException, IOException {
-
         int messageType = Integer.parseInt(message.split(" ")[2]);
         if (messageType == 0) {
             String sendMeessage = "LEAVE " + this.getIp() + " " + this.getPort();
@@ -902,7 +929,6 @@ public class ClientFrame extends javax.swing.JFrame {
         } else if (messageType == 9999) {
             System.out.println("error while adding new node to routing table");
         }
-
     }
 
     public void handleLeave(String message) throws UnknownHostException, IOException {
@@ -1021,7 +1047,6 @@ public class ClientFrame extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JList<String> jList1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1033,7 +1058,33 @@ public class ClientFrame extends javax.swing.JFrame {
     private javax.swing.JTable jTable2;
     private javax.swing.JButton leaveButton;
     private javax.swing.JLabel portLabel;
+    private javax.swing.JButton refreshButton;
     private javax.swing.JButton searchButton;
+    private javax.swing.JList<String> searchFilesResultList;
     private javax.swing.JLabel usernameLabel;
     // End of variables declaration//GEN-END:variables
+
+    public void handleSearchFilesResponse(String message) {
+        //0056 SEROK American 1 10.10.13.152 3 1 American Pickers       
+
+        String[] split = message.split(" ", 4);
+
+        String filename = split[2];
+
+        if (this.currentSearch.equals(filename)) {
+            split = split[3].split(" ", 2);
+            int resultCount = Integer.parseInt(split[0]);
+
+            split = split[1].split(" ", 4);
+            String ip = split[0];
+            String port = split[1];
+
+            String fileSet = split[3];
+            String[] split1 = fileSet.split(",");
+
+            for (String string : split1) {
+                searchFilesResultListModel.addElement(string + " - " + ip + ":" + port);
+            }
+        }
+    }
 }

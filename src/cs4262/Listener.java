@@ -78,8 +78,9 @@ public class Listener implements Runnable {
                     System.out.println(message);
                     this.clientFrame.searchFiles(message);
                     break;
-                case "SEROK": // search response message                    
+                case "SEROK": // search response message
                     System.out.println(message);
+                    this.clientFrame.handleSearchFilesResponse(message);
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok
 //                    System.out.println(message);
