@@ -595,10 +595,9 @@ public class ClientFrame extends javax.swing.JFrame {
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
 
-        System.out.println("action!!!");
+        this.filesTableModel.setRowCount(0);
 
         for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
-            System.out.println("action!!!");
             String filename = entry.getKey();
             ArrayList<String> nodes = entry.getValue();
 
@@ -609,7 +608,6 @@ public class ClientFrame extends javax.swing.JFrame {
             Object row[] = {filename, nodesList};
             this.filesTableModel.addRow(row);
         }
-        System.out.println("action end");
 
 
     }//GEN-LAST:event_refreshButtonActionPerformed
@@ -1041,9 +1039,10 @@ public class ClientFrame extends javax.swing.JFrame {
         }
 
         // display filedic
-        for (String key : fileDictionary.keySet()) {
-            System.out.println(key);
-        }
+//        for (String key : fileDictionary.keySet()) {
+//            System.out.println(key);
+//        }
+        refreshButtonActionPerformed(null);
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
@@ -1064,17 +1063,17 @@ public class ClientFrame extends javax.swing.JFrame {
             }
             String[] a1 = records[i].split("\\=");
             String fileName = a1[0];
-            if (a1.length < 2) {
+            if (a1.length < 1) {
                 continue;
             };
-            String[] nodes = a1[1].split(",");
+            String[] nodes = a1[1].split("\\,");
 
             ArrayList<String> nodesContainingFile = this.fileDictionary.get(fileName);
             if (nodesContainingFile == null) {
                 nodesContainingFile = new ArrayList<>();
             }
             for (int j = 0; j < nodes.length; j++) {
-                if (nodes.length < 2) {
+                if (nodes.length < 1) {
                     continue;
                 }
                 nodesContainingFile.add(nodes[j]);
@@ -1083,10 +1082,14 @@ public class ClientFrame extends javax.swing.JFrame {
         }
 
         // display filedic
-        for (String key : fileDictionary.keySet()) {
-            System.out.println(key);
-        }
-
+//        for (String key : fileDictionary.keySet()) {
+//            System.out.println(key);
+//            ArrayList<String> get = fileDictionary.get(key);
+//            for (String string : get) {
+//                System.out.print(string + " ");
+//                System.out.println("");
+//            }
+//        }
         for (int i = 0; i < numOfNodes; i++) {
             String[] nodeDetails = split_msg[i + 2].split("\\:");
 
@@ -1102,7 +1105,9 @@ public class ClientFrame extends javax.swing.JFrame {
                 this.myNodeList.add(nodeInList);
             }
         }
-        this.displayRoutingTable();
+
+        refreshButtonActionPerformed(null);
+//        this.displayRoutingTable();
         this.status = "1";
     }
 
