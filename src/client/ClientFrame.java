@@ -76,10 +76,6 @@ public class ClientFrame extends javax.swing.JFrame {
         filesTableModel = new DefaultTableModel();
         filesTable.setModel(filesTableModel);
 
-        filesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        filesTable.getColumnModel().getColumn(0).setPreferredWidth(27);
-        filesTable.getColumnModel().getColumn(1).setPreferredWidth(120);
-
         //set node properties
         ipLabel.setText(ip);
         portLabel.setText(port + "");
@@ -427,6 +423,7 @@ public class ClientFrame extends javax.swing.JFrame {
             String searchString = "SEARCH_FILES " + filename;
 
             try {
+                System.out.println("Initialize Search for: " + searchString);
                 initializeSearch(searchString);
             } catch (IOException ex) {
                 Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -808,6 +805,7 @@ public class ClientFrame extends javax.swing.JFrame {
         ArrayList<String> results = new ArrayList<String>();
         Pattern p = Pattern.compile(".*\\\\b" + file_name + "\\\\b.*");
         Set<String> keys = fileDictionary.keySet();
+        System.out.println(keys.isEmpty());
         Iterator<String> iterator = keys.iterator();
 
         while (iterator.hasNext()) {
@@ -820,7 +818,6 @@ public class ClientFrame extends javax.swing.JFrame {
         }
         System.out.println(result_string);
 
-        /////////
         String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + msg.split(" ")[1] + " 1";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
@@ -874,6 +871,53 @@ public class ClientFrame extends javax.swing.JFrame {
                     nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
                 }
                 multicast(message, nodelist);
+            }
+        }
+    }
+
+    // handle leave ok from bootrap server
+    public void handleLeaveOk(String message) throws UnknownHostException, IOException {
+
+        int messageType = Integer.parseInt(message.split(" ")[2]);
+        if (messageType == 0) {
+            String sendMeessage = "LEAVE " + this.getIp() + " " + this.getPort();
+            message = String.format("%04d", sendMeessage.length() + 5) + " " + sendMeessage;
+            multicast(sendMeessage, myNodeList);
+        } else if (messageType == 9999) {
+            System.out.println("error while adding new node to routing table");
+        }
+
+    }
+
+    public void handleLeave(String message) throws UnknownHostException, IOException {
+        String[] splitMesseageList = message.split(" ");
+        String ip = splitMesseageList[2];
+        int port = Integer.parseInt(splitMesseageList[3]);
+        // leave wena eka nodelist eken ain karan ona eke ekek nm.
+        ArrayList<Node> tem = new ArrayList<>();
+        for (Node node : myNodeList) {
+            if (!node.getIp().equals(ip) && node.getPort() != port) {
+                tem.add(node);
+            } else {
+                for (String file : fileDictionary.keySet()) {
+                    ArrayList<String> temFileNodeList = new ArrayList<String>();
+                    for (String username : fileDictionary.get(file)) {
+                        String[] split = username.split(":");
+                        String temIp = split[0];
+                        int temPort = Integer.parseInt(split[1]);
+                        if (temIp != ip && temPort != port) {
+                            temFileNodeList.add(username);
+                        }
+                    }
+                    fileDictionary.replace(file, temFileNodeList);
+                }
+            }
+        }
+        for (int key : bucketTable.keySet()) {
+            Node neighbour = bucketTable.get(key);
+            if (neighbour.getIp() == ip && neighbour.getPort() == port) {
+                bucketTable.remove(key);
+                this.findNodeFromBucket(key);
             }
         }
     }
