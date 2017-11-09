@@ -102,10 +102,13 @@ public class Listener implements Runnable {
                 case "FNL": // unicast message to find myNodeList from node
                     System.out.println(message);
                     sentNode = messagePart[2].split(":");
-                    this.clientFrame.findMyNodeListFromNodeReply(new Node(sentNode[0], Integer.valueOf(sentNode[1])), messagePart[3]);
+                    this.clientFrame.findMyNodeListFromNodeReply(new Node(sentNode[0], Integer.valueOf(sentNode[1])));
                     break;
                 case "FNLOK": //reply to FNL
                     this.clientFrame.receiveReplyfindMyNodeListFromNode(message);
+                    break;
+                case "CWN": 
+                    this.clientFrame.HandleConnectWithNodes(message);
                     break;
             }
         }

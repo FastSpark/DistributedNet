@@ -93,12 +93,14 @@ public class Cs4262 {
                 int randomIndex = new Random().nextInt(fileList.length);
                 String selectedFile = fileList[randomIndex];
                 myFileList.add(selectedFile);
-
+                if(fileDictionary.containsKey(selectedFile)){
+                    continue;
+                }
                 ArrayList<String> nodesContainingFile = fileDictionary.get(selectedFile);
                 if (nodesContainingFile == null) {
                     nodesContainingFile = new ArrayList<>();
                 }
-                nodesContainingFile.add(address);
+                nodesContainingFile.add(address);             
                 fileDictionary.put(selectedFile, nodesContainingFile);
             }
             //end of initializing files
