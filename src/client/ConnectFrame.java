@@ -84,6 +84,12 @@ public class ConnectFrame extends javax.swing.JFrame {
             }
         });
 
+        portText.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                portTextActionPerformed(evt);
+            }
+        });
+
         connectButton.setText("Connect");
         connectButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -149,10 +155,10 @@ public class ConnectFrame extends javax.swing.JFrame {
                 "Adventures of Tintin",
                 "Jack and Jill",
                 "Glee",
-                "The Vampire Diarie",
+                "The Vampire Diaries",
                 "King Arthur",
                 "Windows XP",
-                "Harry Potter",
+                "Harry Potter7",
                 "Kung Fu Panda",
                 "Lady Gaga",
                 "Twilight",
@@ -183,7 +189,7 @@ public class ConnectFrame extends javax.swing.JFrame {
             Map<String, ArrayList<String>> fileDictionary = new HashMap<>();
 
             int randomFileCount = new Random().nextInt(3) + 3;
-            System.out.println("Initializing node with " + randomFileCount + " files...");
+//            System.out.println("Initializing node with " + randomFileCount + " files...");
             ArrayList<String> myFileList = new ArrayList<>();
 
             for (int i = 0; i < randomFileCount; i++) {
@@ -213,16 +219,18 @@ public class ConnectFrame extends javax.swing.JFrame {
 
             Thread heartBeatThread = new Thread(new HeartBeatHandler(cf));
             heartBeatThread.start();
-
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Error connecting to the Bootstrap Server", "Error", JOptionPane.ERROR_MESSAGE);
         }
-
     }//GEN-LAST:event_connectButtonActionPerformed
 
     private void ipTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ipTextActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_ipTextActionPerformed
+
+    private void portTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_portTextActionPerformed
+        connectButtonActionPerformed(evt);
+    }//GEN-LAST:event_portTextActionPerformed
 
     /**
      * @param args the command line arguments

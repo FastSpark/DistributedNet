@@ -39,7 +39,7 @@ public class Listener implements Runnable {
 
         // Socket for server to listen at.
         DatagramSocket datagramSocket = clientFrame.getDatagramSocket();
-        System.out.println("Now listening to port: " + portNum);
+//        System.out.println("Now listening to port: " + portNum);
         byte[] buffer;
         DatagramPacket packet;
         // Simply making Server run continously.
@@ -49,7 +49,7 @@ public class Listener implements Runnable {
             datagramSocket.receive(packet);
 
             String message = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Message Recieved : " + message);
+//            System.out.println("Message Recieved : " + message);
             //print  the details of incoming data - client ip : client port - client message
 //            System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
 
@@ -57,10 +57,11 @@ public class Listener implements Runnable {
             message type
              */
             String[] messagePart = message.split(" ");
+            String[] sentNode;
             switch (messagePart[1]) {
                 case "REGOK":
                     //handle  response from bootstrap
-                    System.out.println(message);
+//                    System.out.println(message);
                     clientFrame.handleRegisterResponse(message);
                     break;
                 case "UNROK": // handle unregister response
@@ -72,29 +73,43 @@ public class Listener implements Runnable {
                     break;
                 case "LEAVE": // leave response message
                     clientFrame.handleLeave(message);
-                    break;    
+                    break;
+                case "SER":
+                    System.out.println(message);
+                    this.clientFrame.searchFiles(message);
+                    break;
                 case "SEROK": // search response message
+                    System.out.println(message);
+                    this.clientFrame.handleSearchFilesResponse(message);
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok
-                    System.out.println(message);
+//                    System.out.println(message);
                     clientFrame.handleHeartBeatResponse(message);
                     break;
                 case "HEARTBEAT":
-                    System.out.println(message);
+//                    System.out.println(message);
                     clientFrame.sendHeartBeatReply(message);
                     break;
                 //this.client.
                 case "FBM": //multicast message to find a node from a bucket
-                    System.out.println(message);
-                    clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(clientFrame.getIp(), clientFrame.getPort()));
+//                    System.out.println(message);
+                    sentNode = messagePart[3].split("\\:");
+                    this.clientFrame.findNodeFromBucketReply(Integer.parseInt(messagePart[2]), new Node(sentNode[0], Integer.valueOf(sentNode[1])));
                     break;
                 case "FBMOK": //reply to FBM
-                    clientFrame.receiveReplyFindNodeFromBucket(message);
+                    this.clientFrame.receiveReplyFindNodeFromBucket(message);
                     break;
-             
-                    
-                    
-
+                case "FNL": // unicast message to find myNodeList from node
+//                    System.out.println(message);
+                    sentNode = messagePart[2].split(":");
+                    this.clientFrame.findMyNodeListFromNodeReply(new Node(sentNode[0], Integer.valueOf(sentNode[1])));
+                    break;
+                case "FNLOK": //reply to FNL
+                    this.clientFrame.receiveReplyfindMyNodeListFromNode(message);
+                    break;
+                case "CWN": 
+                    this.clientFrame.HandleConnectWithNodes(message);
+                    break;
             }
         }
     }

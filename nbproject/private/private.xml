@@ -3,14 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/client/ConnectFrame.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Message.java</file>
-            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Neighbour.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Node.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/HeartBeatHandler.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Cs4262.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Listener.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Client.java</file>
-            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/BootstrapServer.java</file>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/client/ClientFrame.java</file>
         </group>
     </open-files>
 </project-private>

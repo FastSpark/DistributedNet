@@ -77,8 +77,9 @@ public class Cs4262 {
 
             //start of creating connection details
             String address = ip + ":" + port;
-            int myBucketId = address.hashCode();
+            int myBucketId = Math.abs(address.hashCode());
             myBucketId = myBucketId % k;
+            System.out.println("Bucket Id: " + myBucketId);
             //end of getting connection details
 
             //start of initializing files (3 to 5)
@@ -92,12 +93,14 @@ public class Cs4262 {
                 int randomIndex = new Random().nextInt(fileList.length);
                 String selectedFile = fileList[randomIndex];
                 myFileList.add(selectedFile);
-
+                if(fileDictionary.containsKey(selectedFile)){
+                    continue;
+                }
                 ArrayList<String> nodesContainingFile = fileDictionary.get(selectedFile);
                 if (nodesContainingFile == null) {
                     nodesContainingFile = new ArrayList<>();
                 }
-                nodesContainingFile.add(address);
+                nodesContainingFile.add(address);             
                 fileDictionary.put(selectedFile, nodesContainingFile);
             }
             //end of initializing files
