@@ -5,6 +5,7 @@
         <group>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/client/ConnectFrame.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Message.java</file>
+            <file>file:/home/nuwantha/Distributed%20System/cs4262/src/BootstrapServer.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Node.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/HeartBeatHandler.java</file>
             <file>file:/home/nuwantha/Distributed%20System/cs4262/src/cs4262/Cs4262.java</file>

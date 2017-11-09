@@ -61,7 +61,7 @@ public class Listener implements Runnable {
             switch (messagePart[1]) {
                 case "REGOK":
                     //handle  response from bootstrap
-//                    System.out.println(message);
+                    //System.out.println(message);
                     clientFrame.handleRegisterResponse(message);
                     break;
                 case "UNROK": // handle unregister response
@@ -83,11 +83,11 @@ public class Listener implements Runnable {
                     this.clientFrame.handleSearchFilesResponse(message);
                     break;
                 case "HEARTBEATOK": //haddle hearbeat ok
-//                    System.out.println(message);
+                    //System.out.println(message);
                     clientFrame.handleHeartBeatResponse(message);
                     break;
                 case "HEARTBEAT":
-//                    System.out.println(message);
+                    //System.out.println(message);
                     clientFrame.sendHeartBeatReply(message);
                     break;
                 //this.client.
@@ -100,7 +100,7 @@ public class Listener implements Runnable {
                     this.clientFrame.receiveReplyFindNodeFromBucket(message);
                     break;
                 case "FNL": // unicast message to find myNodeList from node
-//                    System.out.println(message);
+//                  System.out.println(message);
                     sentNode = messagePart[2].split(":");
                     this.clientFrame.findMyNodeListFromNodeReply(new Node(sentNode[0], Integer.valueOf(sentNode[1])));
                     break;
