@@ -217,8 +217,8 @@ public class ConnectFrame extends javax.swing.JFrame {
             Thread thread = new Thread(new Listener(cf));
             thread.start();
 
-//            Thread heartBeatThread = new Thread(new HeartBeatHandler(cf));
-//            heartBeatThread.start();
+            Thread heartBeatThread = new Thread(new HeartBeatHandler(cf));
+            heartBeatThread.start();
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Error connecting to the Bootstrap Server", "Error", JOptionPane.ERROR_MESSAGE);
         }

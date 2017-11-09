@@ -49,7 +49,7 @@ public class Listener implements Runnable {
             datagramSocket.receive(packet);
 
             String message = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Message Recieved : " + message);
+//            System.out.println("Message Recieved : " + message);
             //print  the details of incoming data - client ip : client port - client message
 //            System.err.println(packet.getAddress().getHostAddress() + " : " + packet.getPort() + " - " + message);
 

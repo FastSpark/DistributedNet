@@ -84,7 +84,11 @@ public class ClientFrame extends javax.swing.JFrame {
         filesTableModel = new DefaultTableModel(new String[]{"File Name", "Nodes List"}, 0);
         filesTable.setModel(filesTableModel);
 
-        nodesTableModel = new DefaultTableModel();
+//        String[] bucketColumnList = new String[k];
+//        for (int i = 0; i < k; i++) {
+//            bucketColumnList[k] = "Bucket " + k;
+//        }
+        nodesTableModel = new DefaultTableModel(new String[]{"Bucket ID", "Nodes List"}, 0);
         nodesTable.setModel(nodesTableModel);
 
         //set node properties
@@ -411,7 +415,7 @@ public class ClientFrame extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
@@ -448,6 +452,9 @@ public class ClientFrame extends javax.swing.JFrame {
 
             try {
                 System.out.println("Initialize Search for: " + searchString);
+
+                searchFilesResultListModel.removeAllElements();
+
                 initializeSearch(searchString);
             } catch (IOException ex) {
                 Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -598,20 +605,12 @@ public class ClientFrame extends javax.swing.JFrame {
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
 
-        this.filesTableModel.setRowCount(0);
+//        refreshDataInClient();
 
-        for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
-            String filename = entry.getKey();
-            ArrayList<String> nodes = entry.getValue();
-
-            String nodesList = "";
-            for (String node : nodes) {
-                nodesList += (node + " ");
-            }
-            Object row[] = {filename, nodesList};
-            this.filesTableModel.addRow(row);
+        System.out.println("Size: " + this.myNodeList.size());
+        for (int i = 0; i < this.myNodeList.size(); i++) {
+            System.out.println(this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort() + " ");
         }
-
 
     }//GEN-LAST:event_refreshButtonActionPerformed
 
@@ -849,6 +848,8 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
+
+        refreshDataInClient();
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
@@ -1033,6 +1034,8 @@ public class ClientFrame extends javax.swing.JFrame {
             String sendMeessage = "LEAVE " + this.getIp() + " " + this.getPort();
             message = String.format("%04d", sendMeessage.length() + 5) + " " + sendMeessage;
             multicast(sendMeessage, myNodeList);
+
+            System.exit(0);
         } else if (messageType == 9999) {
             System.out.println("error while adding new node to routing table");
         }
@@ -1106,7 +1109,9 @@ public class ClientFrame extends javax.swing.JFrame {
         if (!isAlreadyInMyNodeList) {
             this.myNodeList.add(fromNode);
         }
+
         this.displayRoutingTable();
+
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
@@ -1245,6 +1250,7 @@ public class ClientFrame extends javax.swing.JFrame {
         String filename = split[2];
 
         if (this.currentSearch.equals(filename)) {
+
             split = split[3].split(" ", 2);
             int resultCount = Integer.parseInt(split[0]);
 
@@ -1258,6 +1264,36 @@ public class ClientFrame extends javax.swing.JFrame {
             for (String string : split1) {
                 searchFilesResultListModel.addElement(string + " - " + ip + ":" + port);
             }
+        }
+    }
+
+    @SuppressWarnings("empty-statement")
+    private void refreshDataInClient() {
+        this.filesTableModel.setRowCount(0);
+
+        for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
+            String filename = entry.getKey();
+            ArrayList<String> nodes = entry.getValue();
+
+            String nodesList = "";
+            for (String node : nodes) {
+                nodesList += (node + " ");
+            }
+            Object row[] = {filename, nodesList};
+            this.filesTableModel.addRow(row);
+        }
+
+        this.nodesTableModel.setRowCount(0);
+
+        String[] rowData = new String[]{"Bucket " + this.myBucketId, ""};
+        for (int i = 0; i < this.myNodeList.size(); i++) {
+            rowData[1] += (this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort() + " ");
+        }
+        nodesTableModel.addRow(rowData);
+
+        for (int key : this.bucketTable.keySet()) {
+            Node get = this.bucketTable.get(key);
+            nodesTableModel.addRow(new String[]{"Bucket " + key, (this.bucketTable.get(key).getIp() + ":" + this.bucketTable.get(key).getPort())});
         }
     }
 }
