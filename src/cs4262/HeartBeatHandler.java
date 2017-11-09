@@ -8,6 +8,7 @@ package cs4262;
 import client.ClientFrame;
 import java.io.IOException;
 import java.net.DatagramSocket;
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,6 +43,8 @@ public class HeartBeatHandler implements Runnable {
     public void sendHeartBeat() throws IOException {
         String message = "HEARTBEAT " + this.clientFrame.getIp() + " " + this.clientFrame.getPort();
         message = String.format("%04d", message.length() + 5) + " " + message;
+        ArrayList<Node> myNodeListWithoutMe = this.clientFrame.getMyNodeList();
+        
         this.clientFrame.multicast(message, this.clientFrame.getMyNodeList());
         Set<Integer> keySet = this.clientFrame.getBucketTable().keySet();
         for (int key : keySet) {
