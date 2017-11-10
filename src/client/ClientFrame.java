@@ -53,6 +53,7 @@ public class ClientFrame extends javax.swing.JFrame {
     DefaultListModel<String> filesListModel;
     DefaultListModel<String> searchFilesResultListModel;
     private String currentSearch;
+    private ArrayList<String> mySearchResult;
 
     /**
      * Creates new form ClientFrame
@@ -76,6 +77,7 @@ public class ClientFrame extends javax.swing.JFrame {
         this.myNodeList = new ArrayList<>();
         this.timestamp = new Timestamp(System.currentTimeMillis());
         this.datagramSocket = datagramSocket;
+        mySearchResult = new ArrayList<>();
 
         this.myNodeList.add(new Node(this.ip, this.port));
 //        this.bucketTable.put(this.myBucketId, new Node(this.ip, this.port));
@@ -865,7 +867,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
-        refreshDataInClient();
+//        refreshDataInClient();
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
@@ -989,7 +991,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
 //        displayRoutingTable();
-        refreshDataInClient();
+//        refreshDataInClient();
 
     }
 
@@ -1011,8 +1013,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void initializeSearch(String msg) throws IOException {
         //SEARCH_FILES file_name
-        String file_name = msg.split(" ")[1];
+        int begin_index = msg.split(" ")[0].length()+1;
+        String file_name= msg.substring(begin_index);
+        file_name=file_name.replace(' ', '_');
         String result_string = "";
+        mySearchResult.clear();
 
         //length SEROK no_files IP port hops filename1 filename2 ... ...
 //        ArrayList<String> results = new ArrayList<String>();
@@ -1029,7 +1034,7 @@ public class ClientFrame extends javax.swing.JFrame {
 //            }
 //        }
 //        System.out.println(result_string);
-        String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + msg.split(" ")[1] + " 0";
+        String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + file_name + " 0";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
     }
@@ -1038,6 +1043,7 @@ public class ClientFrame extends javax.swing.JFrame {
         //length SER IP port file_name hops
         String[] split = message.split(" ");
         String file_name = split[4];
+        System.out.println("searching file name: " + file_name);
         String result_string = "";
         String source_ip = split[2];
         int source_port = Integer.parseInt(split[3]);
@@ -1046,10 +1052,15 @@ public class ClientFrame extends javax.swing.JFrame {
         if (split.length == 6) {
             hop_count = Integer.valueOf(split[5]);
         }
+        if(hop_count > 10){
+            System.out.println("Max Hop count reached, stopping the search");
+            return;
+        }
 
         //length SEROK tofind no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
-        Pattern p = Pattern.compile("[a-zA-Z\\s]*" + file_name + "[a-zA-Z\\s]*",Pattern.CASE_INSENSITIVE);
+       String real_file_name= file_name.replace('_', ' ');
+        Pattern p = Pattern.compile("[a-zA-Z\\s]*" + real_file_name + "[a-zA-Z\\s]*",Pattern.CASE_INSENSITIVE);
 
         Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
@@ -1093,25 +1104,31 @@ public class ClientFrame extends javax.swing.JFrame {
                 System.out.println("a");
                 
                 String candidate = iterator.next();
+                System.out.println("Candidate: " + candidate);
                 Matcher m = p.matcher(candidate);
                 if (m.matches()) {
-                System.out.println("b");
+                    System.out.println("b");
                     nodes = fileDictionary.get(candidate);                   
                     for (String node : nodes) {
                         nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
                     }
                     for (Node node : nodelist) {
-                        System.out.println(node.getIp()+" - "+node.getPort());
+                        System.out.println(node.getIp()+":"+node.getPort());
                         
                     }
                     
                     for (int i = 0; i < nodelist.size(); i++) {
-                        if(nodelist.get(i).getIp()==this.ip && nodelist.get(i).getPort()==this.port){
+                        if(nodelist.get(i).getIp().equals(this.ip) && nodelist.get(i).getPort()==this.port){
                             nodelist.remove(i);
                         }
                     }
                     //need to send search ok. not multicast
-                    multicast(message, nodelist);
+                    
+                    //message to spread
+                    String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " "+(++hop_count);
+                    net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
+        
+                    multicast(net_message, nodelist);
                     found = true;
                 }
             }
@@ -1123,12 +1140,17 @@ public class ClientFrame extends javax.swing.JFrame {
                 Iterator<Node> setIterator = values.iterator();
                 while (setIterator.hasNext()){
                     Node next = setIterator.next();
-                    if (next.getIp()!=this.ip || next.getPort()!=this.port) {
+                    if (!(next.getIp().equals(this.ip) && next.getPort()== this.port)) {
+                       
+                        System.out.println("Adding NODE ######### "+ this.port + " " + next.getPort());
                         temValues.add(next);
                     }
                 }
-                values.remove(new Node(this.ip,this.port));
-                multicast(message, temValues);
+//                values.remove(new Node(this.ip,this.port));
+                //message to spread
+                String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " "+(++hop_count);
+                net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
+                multicast(net_message, temValues);
             }
         }
     }
@@ -1353,7 +1375,21 @@ public class ClientFrame extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     public void handleSearchFilesResponse(String message) {
-        //0056 SEROK American 1 10.10.13.152 3 1 American Pickers       
+        //0056 SEROK American 1 10.10.13.152 3 1 American Pickers  
+        
+        // Ignore late results..
+        System.out.println(message);
+        String[] SR = message.split(" ");
+        String MS = "";
+        for (int i=1; i<6; i++){
+            MS += SR[i] + " ";
+        }
+        System.out.println(MS);
+        if(mySearchResult.contains(MS)){
+            return;
+        }else{
+            mySearchResult.add(MS);
+        }
 
         String[] split = message.split(" ", 4);
 
@@ -1377,9 +1413,11 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
     }
+   
 
     private void refreshDataInClient() {
         this.filesTableModel.setRowCount(0);
+
 
         for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
             String filename = entry.getKey();
