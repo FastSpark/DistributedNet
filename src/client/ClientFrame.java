@@ -156,6 +156,7 @@ public class ClientFrame extends javax.swing.JFrame {
         jLabel8.setText("File Name:");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Distributed Net File System Client 1.0");
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Node Properties"));
 
@@ -867,7 +868,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
-//        refreshDataInClient();
+        refreshDataInClient();
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
@@ -875,7 +876,7 @@ public class ClientFrame extends javax.swing.JFrame {
         newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
         String[] splitMessage = message.split(" ");
         String userName= splitMessage[2]+":"+splitMessage[3];
-        int bucketId = userName.hashCode()%k;
+        int bucketId = Math.abs(userName.hashCode()%k);
         Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
         
         boolean containsKey = bucketTable.containsKey(bucketId);
@@ -944,7 +945,7 @@ public class ClientFrame extends javax.swing.JFrame {
         ArrayList<Node> temNodeList = new ArrayList<>();
 //        System.out.println("start");
         for (Node node : myNodeList) {
-            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 20000) {
                 temNodeList.add(node);
             } else {
 //                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
@@ -978,7 +979,7 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
 //            System.out.println("neighour time :" + neighbour.getTimeStamp());
 //            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
-            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 20000) {
 //            System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
               bucketTable.remove(key);
@@ -995,7 +996,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
 //        displayRoutingTable();
-//        refreshDataInClient();
+        refreshDataInClient();
 
     }
 
@@ -1064,7 +1065,7 @@ public class ClientFrame extends javax.swing.JFrame {
         //length SEROK tofind no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
        String real_file_name= file_name.replace('_', ' ');
-        Pattern p = Pattern.compile("[a-zA-Z\\s]*" + real_file_name + "[a-zA-Z\\s]*",Pattern.CASE_INSENSITIVE);
+        Pattern p = Pattern.compile("[a-zA-Z0-9\\s]*" + real_file_name + "[a-zA-Z0-9\\s]*",Pattern.CASE_INSENSITIVE);
 
         Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
@@ -1398,6 +1399,7 @@ public class ClientFrame extends javax.swing.JFrame {
         String[] split = message.split(" ", 4);
 
         String filename = split[2];
+        filename=filename.replace('_', ' ');
 
         if (this.currentSearch.equals(filename)) {
 
