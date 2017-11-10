@@ -960,7 +960,11 @@ public class ClientFrame extends javax.swing.JFrame {
 //                            System.out.println("removed files"+username);
                         }
                     }
-                    fileDictionary.replace(file, temFileNodeList);
+                    if(temFileNodeList.size()==0){
+                        fileDictionary.remove(file);
+                    }else{
+                        fileDictionary.replace(file, temFileNodeList);
+                    }
                 }
 
             }
