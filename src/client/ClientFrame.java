@@ -158,6 +158,7 @@ public class ClientFrame extends javax.swing.JFrame {
         jLabel8.setText("File Name:");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Distributed Net File System Client 1.0");
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Node Properties"));
 
@@ -869,7 +870,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
-//        refreshDataInClient();
+        refreshDataInClient();
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
@@ -993,7 +994,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
 //        displayRoutingTable();
-//        refreshDataInClient();
+        refreshDataInClient();
 
     }
 

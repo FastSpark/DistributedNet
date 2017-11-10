@@ -73,6 +73,7 @@ public class ConnectFrame extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Distributed Net Portal");
 
         jLabel1.setText("Enter IP: ");
 
