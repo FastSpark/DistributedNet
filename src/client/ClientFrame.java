@@ -48,12 +48,10 @@ public class ClientFrame extends javax.swing.JFrame {
     private ArrayList<Node> myNodeList; //nodes in my bucket
     private Timestamp timestamp;
     private DatagramSocket datagramSocket;
-
     private DefaultTableModel filesTableModel;
     private DefaultTableModel nodesTableModel;
     DefaultListModel<String> filesListModel;
     DefaultListModel<String> searchFilesResultListModel;
-
     private String currentSearch;
 
     /**
