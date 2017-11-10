@@ -158,6 +158,7 @@ public class ClientFrame extends javax.swing.JFrame {
         jLabel8.setText("File Name:");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Distributed Net File System Client 1.0");
 
         jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Node Properties"));
 
@@ -870,7 +871,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
-//        refreshDataInClient();
+        refreshDataInClient();
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
@@ -947,7 +948,7 @@ public class ClientFrame extends javax.swing.JFrame {
         ArrayList<Node> temNodeList = new ArrayList<>();
 //        System.out.println("start");
         for (Node node : myNodeList) {
-            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 20000) {
                 temNodeList.add(node);
             } else {
 //                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
@@ -977,7 +978,7 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
 //            System.out.println("neighour time :" + neighbour.getTimeStamp());
 //            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
-            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 20000) {
 //            System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
               bucketTable.remove(key);
@@ -994,7 +995,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
 //        displayRoutingTable();
-//        refreshDataInClient();
+        refreshDataInClient();
 
     }
 
