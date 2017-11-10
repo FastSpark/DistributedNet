@@ -592,7 +592,8 @@ public class ClientFrame extends javax.swing.JFrame {
         int res = JOptionPane.showConfirmDialog(this, "Leave the Bootstrap Server?", "Confirm", JOptionPane.YES_NO_OPTION);
 
         if (res == JOptionPane.YES_OPTION) {
-            String message = "UNREG " + this.getIp() + " " + this.getPort();
+
+            String message = "UNREG " + this.getIp() + " " + this.getPort()+" "+this.getUserName();
             message = String.format("%04d", message.length() + 5) + " " + message;
             
             try {
