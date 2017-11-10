@@ -592,10 +592,11 @@ public class ClientFrame extends javax.swing.JFrame {
         int res = JOptionPane.showConfirmDialog(this, "Leave the Bootstrap Server?", "Confirm", JOptionPane.YES_NO_OPTION);
 
         if (res == JOptionPane.YES_OPTION) {
-            String message = "LEAVE " + this.getIp() + " " + this.getPort();
+            String message = "UNREG " + this.getIp() + " " + this.getPort();
             message = String.format("%04d", message.length() + 5) + " " + message;
-
+            
             try {
+            
                 DatagramPacket dp = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(this.ip), 55555);
                 this.datagramSocket.send(dp);
             } catch (IOException ex) {
@@ -843,7 +844,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     }
 
-    public void handleHeartBeatResponse(String message) {
+    public synchronized void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
         boolean is_Change = false;
         ArrayList<Node> temNodeList = new ArrayList<Node>();
@@ -921,7 +922,7 @@ public class ClientFrame extends javax.swing.JFrame {
             // request myNodeList from that node
             this.findMyNodeListFromNode(bucket_node);
         }
-
+       
         this.displayRoutingTable();
     }
 
@@ -943,14 +944,18 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public synchronized void updateRountingTable() throws IOException {
         ArrayList<Node> temNodeList = new ArrayList<>();
-//        System.out.println("start");
+        System.out.println("start");
+
         for (Node node : myNodeList) {
-            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 20000) {
+            
+            System.out.println(new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp());
+            
+            if ((node.getIp().equals(this.ip)&& node.getPort()==this.port)||new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
                 temNodeList.add(node);
             } else {
-//                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
+                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
                 for (String file : fileDictionary.keySet()) {
-//                    System.out.println("change file dictonary");
+                    System.out.println("change file dictonary");
                     ArrayList<String> temFileNodeList = new ArrayList<String>();
                     for (String username : fileDictionary.get(file)) {
                         String[] split = username.split(":");
@@ -958,14 +963,11 @@ public class ClientFrame extends javax.swing.JFrame {
                         int port = Integer.parseInt(split[1]);
                         if (ip != node.getIp() && port != node.getPort()) {
                             temFileNodeList.add(username);
-//                            System.out.println("removed files"+username);
+                            System.out.println("removed files"+username);
                         }
                     }
-                    if(temFileNodeList.size()==0){
-                        fileDictionary.remove(file);
-                    }else{
                         fileDictionary.replace(file, temFileNodeList);
-                    }
+                  
                 }
 
             }
@@ -979,8 +981,15 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
 //            System.out.println("neighour time :" + neighbour.getTimeStamp());
 //            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
-            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 20000) {
-//            System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
+            
+            if((neighbour.getIp().equals(this.ip)&& neighbour.getPort()==this.port)){
+                continue;
+            
+            }
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
+//          
+
+             System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
               bucketTable.remove(key);
 //            System.out.println("after remove" + bucketTable.keySet());
@@ -1160,7 +1169,7 @@ public class ClientFrame extends javax.swing.JFrame {
         }
     }
 
-    // handle leave ok from bootrap server
+    // handle unreg ok from bootrap server
     public void handleLeaveOk(String message) throws UnknownHostException, IOException {
         System.out.println("Leave Ok Received");
         int messageType = Integer.parseInt(message.split(" ")[2]);

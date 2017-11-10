@@ -69,9 +69,6 @@ public class Listener implements Runnable {
                     break;
                 case "JOINOK": // join response message
                     break;
-                case "LEAVEOK": // leave response message
-                    clientFrame.handleLeaveOk(message);
-                    break;
                 case "LEAVE": // leave response message
                     clientFrame.handleLeave(message);
                     break;
