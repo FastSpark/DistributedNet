@@ -1015,7 +1015,9 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void initializeSearch(String msg) throws IOException {
         //SEARCH_FILES file_name
-        String file_name = msg.split(" ")[1];
+        int begin_index = msg.split(" ")[0].length()+1;
+        String file_name= msg.substring(begin_index);
+        file_name=file_name.replace(' ', '_');
         String result_string = "";
         mySearchResult.clear();
 
@@ -1034,7 +1036,7 @@ public class ClientFrame extends javax.swing.JFrame {
 //            }
 //        }
 //        System.out.println(result_string);
-        String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + msg.split(" ")[1] + " 0";
+        String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + file_name + " 0";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
     }
@@ -1059,7 +1061,8 @@ public class ClientFrame extends javax.swing.JFrame {
 
         //length SEROK tofind no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
-        Pattern p = Pattern.compile("[a-zA-Z\\s]*" + file_name + "[a-zA-Z\\s]*",Pattern.CASE_INSENSITIVE);
+       String real_file_name= file_name.replace('_', ' ');
+        Pattern p = Pattern.compile("[a-zA-Z\\s]*" + real_file_name + "[a-zA-Z\\s]*",Pattern.CASE_INSENSITIVE);
 
         Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
