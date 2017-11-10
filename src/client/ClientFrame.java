@@ -947,7 +947,7 @@ public class ClientFrame extends javax.swing.JFrame {
         ArrayList<Node> temNodeList = new ArrayList<>();
 //        System.out.println("start");
         for (Node node : myNodeList) {
-            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 20000) {
                 temNodeList.add(node);
             } else {
 //                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
@@ -977,7 +977,7 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
 //            System.out.println("neighour time :" + neighbour.getTimeStamp());
 //            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
-            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 20000) {
 //            System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
               bucketTable.remove(key);

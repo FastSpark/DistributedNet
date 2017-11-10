@@ -31,7 +31,7 @@ public class HeartBeatHandler implements Runnable {
         while (true) {
             try {
                 sendHeartBeat();
-                Thread.sleep(2000);
+                Thread.sleep(100);
                 this.clientFrame.updateRountingTable();
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
