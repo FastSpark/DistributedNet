@@ -593,10 +593,11 @@ public class ClientFrame extends javax.swing.JFrame {
         int res = JOptionPane.showConfirmDialog(this, "Leave the Bootstrap Server?", "Confirm", JOptionPane.YES_NO_OPTION);
 
         if (res == JOptionPane.YES_OPTION) {
-            String message = "LEAVE " + this.getIp() + " " + this.getPort();
+            String message = "UNREG " + this.getIp() + " " + this.getPort();
             message = String.format("%04d", message.length() + 5) + " " + message;
-
+            
             try {
+            
                 DatagramPacket dp = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(this.ip), 55555);
                 this.datagramSocket.send(dp);
             } catch (IOException ex) {
@@ -1157,7 +1158,7 @@ public class ClientFrame extends javax.swing.JFrame {
         }
     }
 
-    // handle leave ok from bootrap server
+    // handle unreg ok from bootrap server
     public void handleLeaveOk(String message) throws UnknownHostException, IOException {
         System.out.println("Leave Ok Received");
         int messageType = Integer.parseInt(message.split(" ")[2]);

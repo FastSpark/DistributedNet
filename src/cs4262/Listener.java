@@ -65,11 +65,10 @@ public class Listener implements Runnable {
                     clientFrame.handleRegisterResponse(message);
                     break;
                 case "UNROK": // handle unregister response
+                    clientFrame.handleLeaveOk(message);
+                    
                     break;
                 case "JOINOK": // join response message
-                    break;
-                case "LEAVEOK": // leave response message
-                    clientFrame.handleLeaveOk(message);
                     break;
                 case "LEAVE": // leave response message
                     clientFrame.handleLeave(message);
