@@ -28,6 +28,7 @@ import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -593,11 +594,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
         if (res == JOptionPane.YES_OPTION) {
 
-            String message = "UNREG " + this.getIp() + " " + this.getPort()+" "+this.getUserName();
+            String message = "UNREG " + this.getIp() + " " + this.getPort() + " " + this.getUserName();
             message = String.format("%04d", message.length() + 5) + " " + message;
-            
+
             try {
-            
+
                 DatagramPacket dp = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(this.ip), 55555);
                 this.datagramSocket.send(dp);
             } catch (IOException ex) {
@@ -877,15 +878,15 @@ public class ClientFrame extends javax.swing.JFrame {
         String newMessage = "HEARTBEATOK " + this.getIp() + " " + this.getPort();
         newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
         String[] splitMessage = message.split(" ");
-        String userName= splitMessage[2]+":"+splitMessage[3];
-        int bucketId = Math.abs(userName.hashCode()%k);
+        String userName = splitMessage[2] + ":" + splitMessage[3];
+        int bucketId = Math.abs(userName.hashCode() % k);
         Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
-        
+
         boolean containsKey = bucketTable.containsKey(bucketId);
-        if(containsKey==false){
+        if (containsKey == false) {
             bucketTable.put(bucketId, node);
         }
-        
+
         unicast(newMessage, node);
     }
 
@@ -923,7 +924,7 @@ public class ClientFrame extends javax.swing.JFrame {
             // request myNodeList from that node
             this.findMyNodeListFromNode(bucket_node);
         }
-       
+
         this.displayRoutingTable();
     }
 
@@ -948,13 +949,13 @@ public class ClientFrame extends javax.swing.JFrame {
         System.out.println("start");
 
         for (Node node : myNodeList) {
-            
+
             System.out.println(new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp());
-            
-            if ((node.getIp().equals(this.ip)&& node.getPort()==this.port)||new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
+
+            if ((node.getIp().equals(this.ip) && node.getPort() == this.port) || new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
                 temNodeList.add(node);
             } else {
-                System.out.println("remove one"+ node.getIp()+" "+node.getPort());
+                System.out.println("remove one" + node.getIp() + " " + node.getPort());
                 for (String file : fileDictionary.keySet()) {
                     System.out.println("change file dictonary");
                     ArrayList<String> temFileNodeList = new ArrayList<String>();
@@ -964,11 +965,11 @@ public class ClientFrame extends javax.swing.JFrame {
                         int port = Integer.parseInt(split[1]);
                         if (ip != node.getIp() && port != node.getPort()) {
                             temFileNodeList.add(username);
-                            System.out.println("removed files"+username);
+                            System.out.println("removed files" + username);
                         }
                     }
-                        fileDictionary.replace(file, temFileNodeList);
-                  
+                    fileDictionary.replace(file, temFileNodeList);
+
                 }
 
             }
@@ -982,19 +983,19 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
 //            System.out.println("neighour time :" + neighbour.getTimeStamp());
 //            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
-            
-            if((neighbour.getIp().equals(this.ip)&& neighbour.getPort()==this.port)){
+
+            if ((neighbour.getIp().equals(this.ip) && neighbour.getPort() == this.port)) {
                 continue;
-            
+
             }
             if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
 //          
 
-             System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
+                System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
-              bucketTable.remove(key);
+                bucketTable.remove(key);
 //            System.out.println("after remove" + bucketTable.keySet());
-              this.findNodeFromBucket(key);
+                this.findNodeFromBucket(key);
             }
 
         }
@@ -1028,9 +1029,9 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void initializeSearch(String msg) throws IOException {
         //SEARCH_FILES file_name
-        int begin_index = msg.split(" ")[0].length()+1;
-        String file_name= msg.substring(begin_index);
-        file_name=file_name.replace(' ', '_');
+        int begin_index = msg.split(" ")[0].length() + 1;
+        String file_name = msg.substring(begin_index);
+        file_name = file_name.replace(' ', '_');
         String result_string = "";
         mySearchResult.clear();
 
@@ -1067,15 +1068,15 @@ public class ClientFrame extends javax.swing.JFrame {
         if (split.length == 6) {
             hop_count = Integer.valueOf(split[5]);
         }
-        if(hop_count > 10){
+        if (hop_count > 10) {
             System.out.println("Max Hop count reached, stopping the search");
             return;
         }
 
         //length SEROK tofind no_files IP port hops filename1 filename2 ... ...
         ArrayList<String> results = new ArrayList<String>();
-       String real_file_name= file_name.replace('_', ' ');
-        Pattern p = Pattern.compile("[a-zA-Z0-9\\s]*" + real_file_name + "[a-zA-Z0-9\\s]*",Pattern.CASE_INSENSITIVE);
+        String real_file_name = file_name.replace('_', ' ');
+        Pattern p = Pattern.compile("[a-zA-Z0-9\\s]*" + real_file_name + "[a-zA-Z0-9\\s]*", Pattern.CASE_INSENSITIVE);
 
         Set<String> keys = new HashSet<>(myFileList);
         Iterator<String> iterator = keys.iterator();
@@ -1095,7 +1096,7 @@ public class ClientFrame extends javax.swing.JFrame {
         }
         if (results.size() > 0) {
             System.out.println("in if");
-            
+
             String ret_message = "SEROK " + file_name + " " + results.size() + " " + this.getIp() + " " + this.getPort() + " " + (hop_count++) + " " + result_string;
             ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
 //            System.out.println(ret_message);
@@ -1103,46 +1104,46 @@ public class ClientFrame extends javax.swing.JFrame {
         } else {
 
             System.out.println("in else");
-            
+
             keys = fileDictionary.keySet();
             iterator = keys.iterator();
 
             boolean found = false;
 
             System.out.println("before iterator");
-            
+
             for (String key : keys) {
                 System.out.println(key);
             }
-            
+
             while (iterator.hasNext()) {
                 System.out.println("a");
-                
+
                 String candidate = iterator.next();
                 System.out.println("Candidate: " + candidate);
                 Matcher m = p.matcher(candidate);
                 if (m.matches()) {
                     System.out.println("b");
-                    nodes = fileDictionary.get(candidate);                   
+                    nodes = fileDictionary.get(candidate);
                     for (String node : nodes) {
                         nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
                     }
                     for (Node node : nodelist) {
-                        System.out.println(node.getIp()+":"+node.getPort());
-                        
+                        System.out.println(node.getIp() + ":" + node.getPort());
+
                     }
-                    
+
                     for (int i = 0; i < nodelist.size(); i++) {
-                        if(nodelist.get(i).getIp().equals(this.ip) && nodelist.get(i).getPort()==this.port){
+                        if (nodelist.get(i).getIp().equals(this.ip) && nodelist.get(i).getPort() == this.port) {
                             nodelist.remove(i);
                         }
                     }
                     //need to send search ok. not multicast
-                    
+
                     //message to spread
-                    String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " "+(++hop_count);
+                    String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
                     net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
-        
+
                     multicast(net_message, nodelist);
                     found = true;
                 }
@@ -1150,20 +1151,20 @@ public class ClientFrame extends javax.swing.JFrame {
 
             if (!found) {
                 Collection<Node> values = bucketTable.values();
-                ArrayList<Node> temValues= new ArrayList<>();
-                
+                ArrayList<Node> temValues = new ArrayList<>();
+
                 Iterator<Node> setIterator = values.iterator();
-                while (setIterator.hasNext()){
+                while (setIterator.hasNext()) {
                     Node next = setIterator.next();
-                    if (!(next.getIp().equals(this.ip) && next.getPort()== this.port)) {
-                       
-                        System.out.println("Adding NODE ######### "+ this.port + " " + next.getPort());
+                    if (!(next.getIp().equals(this.ip) && next.getPort() == this.port)) {
+
+                        System.out.println("Adding NODE ######### " + this.port + " " + next.getPort());
                         temValues.add(next);
                     }
                 }
 //                values.remove(new Node(this.ip,this.port));
                 //message to spread
-                String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " "+(++hop_count);
+                String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
                 net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
                 multicast(net_message, temValues);
             }
@@ -1210,8 +1211,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
             }
         }
-        
-        
+
         for (int key : bucketTable.keySet()) {
             Node neighbour = bucketTable.get(key);
             if (neighbour.getIp() == ip && neighbour.getPort() == port) {
@@ -1258,7 +1258,6 @@ public class ClientFrame extends javax.swing.JFrame {
         }
 
 //        this.displayRoutingTable();
-
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
@@ -1391,25 +1390,25 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void handleSearchFilesResponse(String message) {
         //0056 SEROK American 1 10.10.13.152 3 1 American Pickers  
-        
+
         // Ignore late results..
         System.out.println(message);
         String[] SR = message.split(" ");
         String MS = "";
-        for (int i=1; i<6; i++){
+        for (int i = 1; i < 6; i++) {
             MS += SR[i] + " ";
         }
         System.out.println(MS);
-        if(mySearchResult.contains(MS)){
+        if (mySearchResult.contains(MS)) {
             return;
-        }else{
+        } else {
             mySearchResult.add(MS);
         }
 
         String[] split = message.split(" ", 4);
 
         String filename = split[2];
-        filename=filename.replace('_', ' ');
+        filename = filename.replace('_', ' ');
 
         if (this.currentSearch.equals(filename)) {
 
@@ -1419,22 +1418,36 @@ public class ClientFrame extends javax.swing.JFrame {
             split = split[1].split(" ", 4);
             String ip = split[0];
             String port = split[1];
-            String hops= split[2];
+            String hops = split[2];
 
             String fileSet = split[3];
             String[] split1 = fileSet.split(",");
 
             for (String string : split1) {
-                searchFilesResultListModel.addElement(string + " - " + ip + ":" + port+" ("+hops+")");
+                searchFilesResultListModel.addElement(string + " - " + ip + ":" + port + " (" + hops + ")");
             }
         }
     }
-   
 
-    private void refreshDataInClient() {
-        this.filesTableModel.setRowCount(0);
+    private void clearTable(DefaultTableModel table) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                table.setRowCount(0);
+            }
+        });
+    }
 
+    private void addRowToTable(DefaultTableModel table, Object row[]) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                table.addRow(row);
+            }
+        });
+    }
 
+    private synchronized void refreshDataInClient() {
+
+        this.clearTable(this.filesTableModel);
         for (Map.Entry<String, ArrayList<String>> entry : fileDictionary.entrySet()) {
             String filename = entry.getKey();
             ArrayList<String> nodes = entry.getValue();
@@ -1444,21 +1457,21 @@ public class ClientFrame extends javax.swing.JFrame {
                 nodesList += (node + " ");
             }
             Object row[] = {filename, nodesList};
-            this.filesTableModel.addRow(row);
+            this.addRowToTable(this.filesTableModel, row);
         }
 
-        this.nodesTableModel.setRowCount(0);
+        this.clearTable(this.nodesTableModel);
 
         String[] rowData = new String[]{"Bucket " + this.myBucketId, ""};
         for (int i = 0; i < this.myNodeList.size(); i++) {
             rowData[1] += (this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort() + " ");
         }
-        nodesTableModel.addRow(rowData);
+        this.addRowToTable(this.nodesTableModel, rowData);
 
         for (int key : this.bucketTable.keySet()) {
-            if(key != this.myBucketId){               
-            Node get = this.bucketTable.get(key);
-            nodesTableModel.addRow(new String[]{"Bucket " + key, (this.bucketTable.get(key).getIp() + ":" + this.bucketTable.get(key).getPort())});
+            if (key != this.myBucketId) {
+                Node get = this.bucketTable.get(key);
+                this.addRowToTable(this.nodesTableModel, new String[]{"Bucket " + key, (this.bucketTable.get(key).getIp() + ":" + this.bucketTable.get(key).getPort())});
             }
         }
     }
