@@ -39,6 +39,7 @@ public class ConnectFrame extends javax.swing.JFrame {
             initComponents();
 
             ipText.setText(Inet4Address.getLocalHost().getHostAddress());
+            bsIPText.setText(Inet4Address.getLocalHost().getHostAddress());
             portText.requestFocus();
 
             this.setLocationRelativeTo(null);

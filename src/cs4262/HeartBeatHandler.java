@@ -32,7 +32,8 @@ public class HeartBeatHandler implements Runnable {
             try {
                 sendHeartBeat();
                 Thread.sleep(2000);
-                this.clientFrame.updateRountingTable();
+                this.clientFrame.updateRountingTable(10000);
+                this.clientFrame.displayRoutingTable();
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -41,13 +42,20 @@ public class HeartBeatHandler implements Runnable {
 
     //send Heartbeat to other nodes
     public void sendHeartBeat() throws IOException {
+        // Setup HeartBeat Message
         String message = "HEARTBEAT " + this.clientFrame.getIp() + " " + this.clientFrame.getPort();
         message = String.format("%04d", message.length() + 5) + " " + message;
-        ArrayList<Node> myNodeListWithoutMe = this.clientFrame.getMyNodeList();
-        this.clientFrame.multicast(message, this.clientFrame.getMyNodeList());
+        
+        // Send heartBeat to all nodes in myNodeList except me
+        this.clientFrame.multicast(message, this.clientFrame.getMyNodeListWithoutMe());
+        
+        // Send heartBeat to all buckets except my one
         Set<Integer> keySet = this.clientFrame.getBucketTable().keySet();
-        for (int key : keySet) {
-            this.clientFrame.unicast(message, this.clientFrame.getBucketTable().get(key));
+        for (int key : keySet) {        
+            if(key != clientFrame.getMyBucketId()){
+                System.out.println("Bucket ID: "+ key);
+                this.clientFrame.unicast(message, this.clientFrame.getBucketTable().get(key));
+            }       
         }
     }
 }

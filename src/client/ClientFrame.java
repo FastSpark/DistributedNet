@@ -568,6 +568,16 @@ public class ClientFrame extends javax.swing.JFrame {
         return myNodeList;
     }
 
+    public ArrayList<Node> getMyNodeListWithoutMe() {
+        ArrayList<Node> MyNodeListWithoutMe = new ArrayList<>();
+        for (Node node : myNodeList) {
+            if (!node.getIp().equals(this.ip) || node.getPort() != this.port) {
+                MyNodeListWithoutMe.add(node);
+            }
+        }
+        return MyNodeListWithoutMe;
+    }
+
     public void setMyNodeList(ArrayList<Node> myNodeList) {
         this.myNodeList = myNodeList;
     }
@@ -814,13 +824,13 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // save files to fileDicationary
         String[] records = fileList.split("\\|");
-        for (int i = 0; i < records.length; i++) {
+        for (int i = 0; i < records.length - 1; i++) {
             if (records[i].length() < 2) {
                 continue;
             }
             String[] a1 = records[i].split("\\=");
             String fileName = a1[0];
-            if (a1.length < 1) {
+            if (a1.length <1 ||  a1[0].length() < 1 || a1[1].length() < 1) {
                 continue;
             };
             String[] nodes = a1[1].split("\\,");
@@ -848,24 +858,31 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public synchronized void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
-        boolean is_Change = false;
-        ArrayList<Node> temNodeList = new ArrayList<Node>();
+
+        // Identify the node that sent this heartBeat Reply
+        ArrayList<Node> temNodeList = new ArrayList<>();
         String[] splitMessage = message.split(" ");
         String ip = splitMessage[2];
         int port = Integer.parseInt(splitMessage[3]);
-        for (Node node : myNodeList) {
-            if (node.getIp().equals(ip) && node.getPort() == port) {
-                node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
-                is_Change = true;
-            }
-            temNodeList.add(node);
-        }
-        this.myNodeList = temNodeList;
+        String uName = ip + ":" + port;
+        int bId = Math.abs(uName.hashCode() % k);
 
-        if (!is_Change) {
+        if (bId == this.myBucketId) {
+            for (Node node : myNodeList) {
+                if (node.getIp().equals(ip) && node.getPort() == port) {
+                    System.out.println("UPDATING NODE in mynodeList: " + node.getPort());
+                    node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
+                    temNodeList.add(node);
+                }
+
+            }
+            temNodeList.add(new Node(this.ip, this.port));
+            this.myNodeList = temNodeList;
+        } else {
             for (int key : bucketTable.keySet()) {
                 Node node = bucketTable.get(key);
                 if (node.getIp().equals(ip) && node.getPort() == port) {
+                    System.out.println("UPDATING NODE in myBucketTable: " + node.getPort());
                     node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
                     bucketTable.replace(key, node);
                 }
@@ -875,18 +892,22 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void sendHeartBeatReply(String message) throws IOException {
+        // Setup HeartBeat message
         String newMessage = "HEARTBEATOK " + this.getIp() + " " + this.getPort();
         newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
+
+        // Identify node that sent the heartBeat
         String[] splitMessage = message.split(" ");
-        String userName = splitMessage[2] + ":" + splitMessage[3];
-        int bucketId = Math.abs(userName.hashCode() % k);
+        String uName = splitMessage[2] + ":" + splitMessage[3];
+        int bId = Math.abs(uName.hashCode() % k);
         Node node = new Node(splitMessage[2], Integer.parseInt(splitMessage[3]));
 
-        boolean containsKey = bucketTable.containsKey(bucketId);
-        if (containsKey == false) {
-            bucketTable.put(bucketId, node);
+        // Add the node to myBucketList if I haven't got a node for it's bucketId
+        if (!bucketTable.containsKey(bId) && bId != this.myBucketId) {
+            bucketTable.put(bId, node);
         }
 
+        // send reply to the heartBeat
         unicast(newMessage, node);
     }
 
@@ -896,6 +917,12 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("Ignoring msg");
             return;
         }
+        
+        // Update routing table to remove old nodes (suspect that are not in the net) before replying
+        System.out.println("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+        this.updateRountingTable(5000);
+        System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+        
 //        System.out.println("Finding NOde !!!!");
         Node nodeFromBucket = null;
         String message = null;
@@ -944,20 +971,36 @@ public class ClientFrame extends javax.swing.JFrame {
         }
     }
 
-    public synchronized void updateRountingTable() throws IOException {
+    public synchronized void updateRountingTable(int timeLimit) throws IOException {
         ArrayList<Node> temNodeList = new ArrayList<>();
         System.out.println("start");
 
+        // if my bucket table does not have a connection in some bucket we need to update that
+        Set<Integer> keySet = bucketTable.keySet();
+        for (int i = 0; i < this.k; i++) {
+            if (!keySet.contains(i)) {
+                this.findNodeFromBucket(i);
+            }
+        }
+
+        // Update myNodeList
         for (Node node : myNodeList) {
+
+            // If me in the myNodeList
+            if (node.getIp().equals(this.ip) && node.getPort() == this.port) {
+                temNodeList.add(new Node(this.ip, this.port));
+                continue;
+            }
 
             System.out.println(new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp());
 
-            if ((node.getIp().equals(this.ip) && node.getPort() == this.port) || new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < 10000) {
+            // Fileter out the live nodes (which coulb be able to reply to the heartBeat within 10 seconds)
+            if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < timeLimit) {
                 temNodeList.add(node);
             } else {
-                System.out.println("remove one" + node.getIp() + " " + node.getPort());
+                System.out.println("REMOVING NODE " + node.getIp() + " " + node.getPort());
                 for (String file : fileDictionary.keySet()) {
-                    System.out.println("change file dictonary");
+                    System.out.println("UPDATING file dictonary");
                     ArrayList<String> temFileNodeList = new ArrayList<String>();
                     for (String username : fileDictionary.get(file)) {
                         String[] split = username.split(":");
@@ -969,49 +1012,50 @@ public class ClientFrame extends javax.swing.JFrame {
                         }
                     }
                     fileDictionary.replace(file, temFileNodeList);
-
                 }
 
             }
         }
-
-//        System.out.println("myNodeList " + myNodeList.size());
-//        System.out.println("myTemList " + temNodeList.size());
         this.myNodeList = temNodeList;
+
         for (int key : bucketTable.keySet()) {
             Node neighbour = bucketTable.get(key);
-//            System.out.println("time now" + new Timestamp(System.currentTimeMillis()).getTime());
-//            System.out.println("neighour time :" + neighbour.getTimeStamp());
-//            System.out.println("time to response in bucket table " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()));
 
+            // Ignore me in the bucketTable
             if ((neighbour.getIp().equals(this.ip) && neighbour.getPort() == this.port)) {
                 continue;
-
             }
-            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > 10000) {
+
+            System.out.println("Neighbour:           " + neighbour.getPort());
+            System.out.println("Neighbour timeStamp: " + neighbour.getTimeStamp());
+            System.out.println("Current Time Stamp : " + new Timestamp(System.currentTimeMillis()).getTime());
+            System.out.println("Diff in time       : " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()) + "\n");
+
+            if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > timeLimit) {
 //          
 
                 System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
 //            System.out.println("before remove" + bucketTable.keySet());
                 bucketTable.remove(key);
+                System.out.println("Updated bucketTable:::::::::");
+                for (int keyNew : bucketTable.keySet()) {
+                    System.out.println(keyNew);
+                }
+
+                refreshDataInClient();
 //            System.out.println("after remove" + bucketTable.keySet());
                 this.findNodeFromBucket(key);
             }
 
         }
-        // if my bucket table does not have connect ti some bucket we need to update that
-        Set<Integer> keySet = bucketTable.keySet();
-        for (int i = 0; i < this.k; i++) {
-            if (!keySet.contains(i) && i != this.myBucketId) {
-                this.findNodeFromBucket(i);
-            }
-        }
+
 //        displayRoutingTable();
         refreshDataInClient();
 
     }
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
+        System.out.println("Find Node From bucketId: " + bucketId);
         //FBM: Find Bucket Member 0011 FBM 01
         String message = "FBM " + bucketId + " " + this.ip + ":" + Integer.toString(this.port);
         message = String.format("%04d", message.length() + 5) + " " + message;
@@ -1335,20 +1379,20 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void displayRoutingTable() {
         if (myNodeList.isEmpty() && bucketTable.isEmpty()) {
-//            System.out.println("Tables are empty");
+            System.out.println("Tables are empty");
         } else {
-//            System.out.println("Nodes list in the Bucket:");
+            System.out.println("Nodes list in the Bucket:");
             for (Node node : myNodeList) {
-//                System.out.println("\t" + node.getIp() + ":" + node.getPort());
+                System.out.println("\t" + node.getIp() + ":" + node.getPort());
             }
 
-//            System.out.println("Nodes list from other Buckets:");
+            System.out.println("Nodes list from other Buckets:");
             Iterator entries = bucketTable.entrySet().iterator();
             while (entries.hasNext()) {
                 Map.Entry entry = (Map.Entry) entries.next();
                 Integer key = (Integer) entry.getKey();
                 Node node = (Node) entry.getValue();
-//                System.out.println("Bucket " + key + " : " + node.getIp() + ":" + node.getPort());
+                System.out.println("Bucket " + key + " : " + node.getIp() + ":" + node.getPort());
             }
         }
     }
