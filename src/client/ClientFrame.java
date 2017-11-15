@@ -825,14 +825,15 @@ public class ClientFrame extends javax.swing.JFrame {
         // save files to fileDicationary
         String[] records = fileList.split("\\|");
         for (int i = 0; i < records.length - 1; i++) {
-            if (records[i].length() < 2) {
+            String[] a1 = records[i].split("\\=");
+            if (a1.length < 2) {
                 continue;
             }
-            String[] a1 = records[i].split("\\=");
             String fileName = a1[0];
-            if (a1.length <1 ||  a1[0].length() < 1 || a1[1].length() < 1) {
+            if (a1[1].length() < 1) {
                 continue;
-            };
+            }
+
             String[] nodes = a1[1].split("\\,");
 
             ArrayList<String> nodesContainingFile = this.fileDictionary.get(fileName);
@@ -840,9 +841,6 @@ public class ClientFrame extends javax.swing.JFrame {
                 nodesContainingFile = new ArrayList<>();
             }
             for (int j = 0; j < nodes.length; j++) {
-                if (nodes.length < 1) {
-                    continue;
-                }
                 if (!nodesContainingFile.contains(nodes[j])) {
                     nodesContainingFile.add(nodes[j]);
                 }
@@ -917,12 +915,12 @@ public class ClientFrame extends javax.swing.JFrame {
 //            System.out.println("Ignoring msg");
             return;
         }
-        
+
         // Update routing table to remove old nodes (suspect that are not in the net) before replying
         System.out.println("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
         this.updateRountingTable(5000);
         System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-        
+
 //        System.out.println("Finding NOde !!!!");
         Node nodeFromBucket = null;
         String message = null;
@@ -1010,6 +1008,9 @@ public class ClientFrame extends javax.swing.JFrame {
                             temFileNodeList.add(username);
                             System.out.println("removed files" + username);
                         }
+                    }
+                    if (temFileNodeList.isEmpty()) {
+                        fileDictionary.remove(file);
                     }
                     fileDictionary.replace(file, temFileNodeList);
                 }

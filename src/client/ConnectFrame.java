@@ -14,9 +14,9 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -206,7 +206,7 @@ public class ConnectFrame extends javax.swing.JFrame {
             msg = "00" + Integer.toString(msg.length()) + msg;
 
             //set files details           
-            Map<String, ArrayList<String>> fileDictionary = new HashMap<>();
+            Map<String, ArrayList<String>> fileDictionary = new ConcurrentHashMap<>();
 
             int randomFileCount = new Random().nextInt(3) + 3;
 //            System.out.println("Initializing node with " + randomFileCount + " files...");
