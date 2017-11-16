@@ -33,7 +33,6 @@ public class HeartBeatHandler implements Runnable {
                 sendHeartBeat();
                 Thread.sleep(2000);
                 this.clientFrame.updateRountingTable(10000);
-//                this.clientFrame.displayRoutingTable();
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(HeartBeatHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -53,7 +52,6 @@ public class HeartBeatHandler implements Runnable {
         Set<Integer> keySet = this.clientFrame.getBucketTable().keySet();
         for (int key : keySet) {        
             if(key != clientFrame.getMyBucketId()){
-                System.out.println("Bucket ID: "+ key);
                 this.clientFrame.unicast(message, this.clientFrame.getBucketTable().get(key));
             }       
         }

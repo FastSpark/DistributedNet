@@ -7,7 +7,10 @@ package client;
 
 import cs4262.Client;
 import cs4262.Node;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -26,7 +29,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.DefaultListModel;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
@@ -55,6 +57,10 @@ public class ClientFrame extends javax.swing.JFrame {
     DefaultListModel<String> searchFilesResultListModel;
     private String currentSearch;
     private ArrayList<String> mySearchResult;
+    private FileWriter fw;
+    private PrintWriter writer;
+
+    private long searchStart;
 
     /**
      * Creates new form ClientFrame
@@ -63,7 +69,7 @@ public class ClientFrame extends javax.swing.JFrame {
         initComponents();
     }
 
-    ClientFrame(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) {
+    ClientFrame(int k, int myBucketId, String ip, int port, String username, Map<String, ArrayList<String>> fileDictionary, ArrayList<String> myFileList, DatagramSocket datagramSocket) throws IOException {
         initComponents();
 
         this.k = k; // get from main
@@ -79,6 +85,8 @@ public class ClientFrame extends javax.swing.JFrame {
         this.timestamp = new Timestamp(System.currentTimeMillis());
         this.datagramSocket = datagramSocket;
         mySearchResult = new ArrayList<>();
+        fw = new FileWriter("UDP-performance.txt", true);
+        writer = new PrintWriter(new BufferedWriter(fw));
 
         this.myNodeList.add(new Node(this.ip, this.port));
 //        this.bucketTable.put(this.myBucketId, new Node(this.ip, this.port));
@@ -99,6 +107,7 @@ public class ClientFrame extends javax.swing.JFrame {
         usernameLabel.setText(username);
 
         System.out.println("bucketID: " + myBucketId);
+        System.out.println("Port: " + port);
 
         bucketIDLabel.setText(myBucketId + "");
 
@@ -151,8 +160,8 @@ public class ClientFrame extends javax.swing.JFrame {
         jScrollPane4 = new javax.swing.JScrollPane();
         nodesTable = new javax.swing.JTable();
         exitButton = new javax.swing.JButton();
-        leaveButton = new javax.swing.JButton();
         refreshButton = new javax.swing.JButton();
+        leaveButton = new javax.swing.JButton();
 
         jLabel8.setText("File Name:");
 
@@ -307,7 +316,7 @@ public class ClientFrame extends javax.swing.JFrame {
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addComponent(jLabel9)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
         );
 
@@ -392,7 +401,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 .addComponent(jLabel10)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(66, Short.MAX_VALUE))
         );
 
         exitButton.setText("Exit");
@@ -402,17 +411,17 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         });
 
-        leaveButton.setText("Leave");
-        leaveButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                leaveButtonActionPerformed(evt);
-            }
-        });
-
         refreshButton.setText("Refresh");
         refreshButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 refreshButtonActionPerformed(evt);
+            }
+        });
+
+        leaveButton.setText("Leave");
+        leaveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                leaveButtonActionPerformed(evt);
             }
         });
 
@@ -429,7 +438,7 @@ public class ClientFrame extends javax.swing.JFrame {
                         .addComponent(refreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(leaveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(exitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
@@ -440,8 +449,9 @@ public class ClientFrame extends javax.swing.JFrame {
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(leaveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(exitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(exitButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(leaveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(refreshButton, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
@@ -625,11 +635,6 @@ public class ClientFrame extends javax.swing.JFrame {
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
 
         refreshDataInClient();
-//        System.out.println("Size: " + this.myNodeList.size());
-//        for (int i = 0; i < this.myNodeList.size(); i++) {
-//            System.out.println(this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort() + " ");
-//        }
-
     }//GEN-LAST:event_refreshButtonActionPerformed
 
     /**
@@ -717,36 +722,25 @@ public class ClientFrame extends javax.swing.JFrame {
                     Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
-//                if (!bucketTable.containsKey(this.myBucketId)) { // if I'm only the node in my bucket no need to wait for myNodeList to populate
-//                    System.out.println("I'm the only node in my bucket");
-////                    this.displayRoutingTable();
-////                    this.status = "1";
-//                } else if (this.myNodeList.size() == 1) { // if haven't receive a node in same bucket and haven't called findMyNodeListFromNode inside storeNode method
-//                    // request myNodeList from bucketTable.get(this.myBucketId)
-//                    this.findMyNodeListFromNode(this.bucketTable.get(this.myBucketId));
-//                }
-////                System.out.println("###################");
-////                this.displayRoutingTable();
-////                this.status = "1";
                 break;
             case "9999":
-//                System.out.println("failed, there is some error in the command");
+                System.out.println("failed, there is some error in the command");
                 JOptionPane.showMessageDialog(this, "Failed, there is some error in the command", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 break;
             case "9998":
-//                System.out.println("failed, already registered! attempting unregister first");
+                System.out.println("failed, already registered! attempting unregister first");
                 JOptionPane.showMessageDialog(this, "Failed, already registered! attempting unregister first", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 break;
             case "9997":
-//                System.out.println("failed, registered to another user, try a different IP and port");
+                System.out.println("failed, registered to another user, try a different IP and port");
                 JOptionPane.showMessageDialog(this, "Failed, registered to another user, try a different IP and port", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 // TODO
                 break;
             case "9996":
-//                System.out.println("failed, can't register. BS full.");
+                System.out.println("failed, can't register. BS full.");
                 JOptionPane.showMessageDialog(this, "Failed, can't register. BS is full", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
             default:
@@ -790,11 +784,10 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void HandleConnectWithNodes(String message) {
-//        System.out.println(message);
         String[] arr = message.split("\\;");
         String[] split_msg = arr[0].split(" ");
         String[] nodeDetails = split_msg[2].split("\\:");
-        if(arr.length<3){
+        if (arr.length < 3) {
             return;
         }
         String[] bucketList = arr[2].split("\\|");
@@ -827,7 +820,6 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // update MyFileDictionary
         String fileList = arr[1];
-//        System.out.println("File List *************** " + fileList);
 
         // save files to fileDicationary
         String[] records = fileList.split("\\|");
@@ -857,8 +849,6 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // display filedic
         refreshDataInClient();
-        this.displayRoutingTable();
-
     }
 
     public synchronized void handleHeartBeatResponse(String message) {
@@ -875,9 +865,8 @@ public class ClientFrame extends javax.swing.JFrame {
         if (bId == this.myBucketId) {
             for (Node node : myNodeList) {
                 if (node.getIp().equals(ip) && node.getPort() == port) {
-                    System.out.println("UPDATING NODE in mynodeList: " + node.getPort());
                     temNodeList.add(new Node(node.getIp(), node.getPort()));
-                }else{
+                } else {
                     temNodeList.add(node);
                 }
             }
@@ -886,7 +875,6 @@ public class ClientFrame extends javax.swing.JFrame {
             for (int key : bucketTable.keySet()) {
                 Node node = bucketTable.get(key);
                 if (node.getIp().equals(ip) && node.getPort() == port) {
-                    System.out.println("UPDATING NODE in myBucketTable: " + node.getPort());
                     node.setTimeStamp(new Timestamp(System.currentTimeMillis()).getTime());
                     bucketTable.replace(key, node);
                 }
@@ -918,28 +906,21 @@ public class ClientFrame extends javax.swing.JFrame {
     public void findNodeFromBucketReply(int bucketId, Node fromNode) throws UnknownHostException, IOException {
         //FBMOK: Find Bucket Member OK
         if (fromNode.getIp().equals(this.ip) && fromNode.getPort() == this.port) {
-//            System.out.println("Ignoring msg");
             return;
         }
 
         // Update routing table to remove old nodes (suspect that are not in the net) before replying
-        System.out.println("VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
         this.updateRountingTable(5000);
-        System.out.println("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
-//        System.out.println("Finding NOde !!!!");
         Node nodeFromBucket = null;
         String message = null;
         if (bucketTable.get(bucketId) != null) {
-//            System.out.println("Node found" + bucketTable.get(bucketId).getPort());
             nodeFromBucket = bucketTable.get(bucketId);
             message = "FBMOK " + bucketId + " " + nodeFromBucket.getIp() + " " + nodeFromBucket.getPort();
         } else {
-//            System.out.println("Node not found!");
             message = "FBMOK " + bucketId + " null null";
         }
         message = String.format("%04d", message.length() + 5) + " " + message;
-//        System.out.println(fromNode.getIp() + fromNode.getPort());
         unicast(message, fromNode);
     }
 
@@ -955,8 +936,6 @@ public class ClientFrame extends javax.swing.JFrame {
             // request myNodeList from that node
             this.findMyNodeListFromNode(bucket_node);
         }
-
-        this.displayRoutingTable();
     }
 
     public void unicast(String message, Node node) throws SocketException, UnknownHostException, IOException {
@@ -977,7 +956,6 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public synchronized void updateRountingTable(int timeLimit) throws IOException {
         ArrayList<Node> temNodeList = new ArrayList<>();
-        System.out.println("start");
 
         // if my bucket table does not have a connection in some bucket we need to update that
         Set<Integer> keySet = bucketTable.keySet();
@@ -996,15 +974,12 @@ public class ClientFrame extends javax.swing.JFrame {
                 continue;
             }
 
-            System.out.println(new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp());
-
             // Fileter out the live nodes (which coulb be able to reply to the heartBeat within 10 seconds)
             if (new Timestamp(System.currentTimeMillis()).getTime() - node.getTimeStamp() < timeLimit) {
                 temNodeList.add(node);
             } else {
-                System.out.println("REMOVING NODE " + node.getIp() + " " + node.getPort());
+                System.out.println("Removing node from myNodeList " + node.getIp() + " " + node.getPort());
                 for (String file : fileDictionary.keySet()) {
-                    System.out.println("UPDATING file dictonary");
                     ArrayList<String> temFileNodeList = new ArrayList<String>();
                     for (String username : fileDictionary.get(file)) {
                         String[] split = username.split(":");
@@ -1012,7 +987,6 @@ public class ClientFrame extends javax.swing.JFrame {
                         int port = Integer.parseInt(split[1]);
                         if (ip != node.getIp() && port != node.getPort()) {
                             temFileNodeList.add(username);
-                            System.out.println("removed files" + username);
                         }
                     }
                     if (temFileNodeList.isEmpty()) {
@@ -1020,7 +994,6 @@ public class ClientFrame extends javax.swing.JFrame {
                     }
                     fileDictionary.replace(file, temFileNodeList);
                 }
-
             }
         }
         this.myNodeList = temNodeList;
@@ -1033,36 +1006,22 @@ public class ClientFrame extends javax.swing.JFrame {
                 continue;
             }
 
-            System.out.println("Neighbour:           " + neighbour.getPort());
-            System.out.println("Neighbour timeStamp: " + neighbour.getTimeStamp());
-            System.out.println("Current Time Stamp : " + new Timestamp(System.currentTimeMillis()).getTime());
-            System.out.println("Diff in time       : " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()) + "\n");
-
             if (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp() > timeLimit) {
-//          
-
-                System.out.println("time to response in bucket table " + (timestamp.getTime() - neighbour.getTimeStamp()));
-//            System.out.println("before remove" + bucketTable.keySet());
+                
+                System.out.println("Removing Neighbour: " + neighbour.getPort());
+//                System.out.println("Neighbour timeStamp: " + neighbour.getTimeStamp());
+//                System.out.println("Current Time Stamp : " + new Timestamp(System.currentTimeMillis()).getTime());
+//                System.out.println("Diff in time       : " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()) + "\n");
                 bucketTable.remove(key);
-                System.out.println("Updated bucketTable:::::::::");
-                for (int keyNew : bucketTable.keySet()) {
-                    System.out.println(keyNew);
-                }
-
                 refreshDataInClient();
-//            System.out.println("after remove" + bucketTable.keySet());
                 this.findNodeFromBucket(key);
             }
-
         }
-
-//        displayRoutingTable();
         refreshDataInClient();
 
     }
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
-        System.out.println("Find Node From bucketId: " + bucketId);
         //FBM: Find Bucket Member 0011 FBM 01
         String message = "FBM " + bucketId + " " + this.ip + ":" + Integer.toString(this.port);
         message = String.format("%04d", message.length() + 5) + " " + message;
@@ -1079,28 +1038,19 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void initializeSearch(String msg) throws IOException {
+
         //SEARCH_FILES file_name
         int begin_index = msg.split(" ")[0].length() + 1;
         String file_name = msg.substring(begin_index);
+
+        searchStart = new Timestamp(System.currentTimeMillis()).getTime();
+        writer.println("Node IP:\t" + this.ip);
+        writer.println("Node Port:\t" + this.port + "\n");
+        writer.println("search msg:\t" + file_name);
+
         file_name = file_name.replace(' ', '_');
-        String result_string = "";
         mySearchResult.clear();
 
-        //length SEROK no_files IP port hops filename1 filename2 ... ...
-//        ArrayList<String> results = new ArrayList<String>();
-//        Pattern p = Pattern.compile(".*\\\\b" + file_name + "\\\\b.*");
-//        Set<String> keys = fileDictionary.keySet();
-//        Iterator<String> iterator = keys.iterator();
-//
-//        while (iterator.hasNext()) {
-//            String candidate = iterator.next();
-//            Matcher m = p.matcher(candidate);
-//            if (m.matches()) {
-//                results.add(candidate);
-//                result_string.concat(candidate + " ");
-//            }
-//        }
-//        System.out.println(result_string);
         String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + file_name + " 0";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
@@ -1141,47 +1091,26 @@ public class ClientFrame extends javax.swing.JFrame {
             Matcher m = p.matcher(candidate);
             if (m.matches()) {
                 results.add(candidate);
-//                System.out.println(candidate);
                 result_string = result_string.concat(candidate + ",");
             }
         }
         if (results.size() > 0) {
-            System.out.println("in if");
-
             String ret_message = "SEROK " + file_name + " " + results.size() + " " + this.getIp() + " " + this.getPort() + " " + (hop_count++) + " " + result_string;
             ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
-//            System.out.println(ret_message);
             unicast(ret_message, new Node(source_ip, source_port));
         } else {
-
-            System.out.println("in else");
-
+            System.out.println("Not found in own file list, searching in bucket...");
             keys = fileDictionary.keySet();
             iterator = keys.iterator();
-
             boolean found = false;
-
-            System.out.println("before iterator");
-
-            for (String key : keys) {
-                System.out.println(key);
-            }
-
             while (iterator.hasNext()) {
-                System.out.println("a");
-
                 String candidate = iterator.next();
-                System.out.println("Candidate: " + candidate);
                 Matcher m = p.matcher(candidate);
                 if (m.matches()) {
-                    System.out.println("b");
+                    System.out.println("Found in bucket");
                     nodes = fileDictionary.get(candidate);
                     for (String node : nodes) {
                         nodelist.add(new Node(node.split(":")[0], Integer.parseInt(node.split(":")[1])));
-                    }
-                    for (Node node : nodelist) {
-                        System.out.println(node.getIp() + ":" + node.getPort());
-
                     }
 
                     for (int i = 0; i < nodelist.size(); i++) {
@@ -1189,7 +1118,6 @@ public class ClientFrame extends javax.swing.JFrame {
                             nodelist.remove(i);
                         }
                     }
-                    //need to send search ok. not multicast
 
                     //message to spread
                     String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
@@ -1201,6 +1129,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
 
             if (!found) {
+                System.out.println("Not found in own bucket, serching other buckets...");
                 Collection<Node> values = bucketTable.values();
                 ArrayList<Node> temValues = new ArrayList<>();
 
@@ -1208,12 +1137,10 @@ public class ClientFrame extends javax.swing.JFrame {
                 while (setIterator.hasNext()) {
                     Node next = setIterator.next();
                     if (!(next.getIp().equals(this.ip) && next.getPort() == this.port)) {
-
-                        System.out.println("Adding NODE ######### " + this.port + " " + next.getPort());
                         temValues.add(next);
                     }
                 }
-//                values.remove(new Node(this.ip,this.port));
+
                 //message to spread
                 String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
                 net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
@@ -1224,12 +1151,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
     // handle unreg ok from bootrap server
     public void handleLeaveOk(String message) throws UnknownHostException, IOException {
-        System.out.println("Leave Ok Received");
         int messageType = Integer.parseInt(message.split(" ")[2]);
         if (messageType == 0) {
             String sendMeessage = "LEAVE " + this.getIp() + " " + this.getPort();
             message = String.format("%04d", sendMeessage.length() + 5) + " " + sendMeessage;
-            multicast(sendMeessage, myNodeList);
+            multicast(message, myNodeList);
 
             System.exit(0);
         } else if (messageType == 9999) {
@@ -1238,7 +1164,6 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void handleLeave(String message) throws UnknownHostException, IOException {
-        System.out.println("call leave");
         String[] splitMesseageList = message.split(" ");
         String ip = splitMesseageList[2];
         int port = Integer.parseInt(splitMesseageList[3]);
@@ -1265,7 +1190,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         for (int key : bucketTable.keySet()) {
             Node neighbour = bucketTable.get(key);
-            if (neighbour.getIp() == ip && neighbour.getPort() == port) {
+            if (neighbour.getIp().equals(ip) && neighbour.getPort() == port) {
                 bucketTable.remove(key);
                 this.findNodeFromBucket(key);
             }
@@ -1307,19 +1232,13 @@ public class ClientFrame extends javax.swing.JFrame {
         if (!isAlreadyInMyNodeList) {
             this.myNodeList.add(fromNode);
         }
-
-//        this.displayRoutingTable();
     }
 
     public void receiveReplyfindMyNodeListFromNode(String message) throws UnknownHostException, IOException {
-//        System.out.println(message);
         String[] arr = message.split("\\;");
-//        System.out.println(arr[0]);
         String[] split_msg = arr[0].split(" ");
         int numOfNodes = split_msg.length - 2;
-
         String fileList = arr[1];
-//        System.out.println("File LIst *************** " + fileList);
 
         // save files to fileDicationary
         String[] records = fileList.split("\\|");
@@ -1352,16 +1271,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // display filedic
         for (String key : fileDictionary.keySet()) {
-//            System.out.println(key);
             ArrayList<String> get = fileDictionary.get(key);
-            for (String string : get) {
-//                System.out.print(string + " ");
-//                System.out.println("");
-            }
+
         }
         for (int i = 0; i < numOfNodes; i++) {
             String[] nodeDetails = split_msg[i + 2].split("\\:");
-//            System.out.println(nodeDetails[0]);
 
             Boolean isAlreadyInMyNodeList = false;
             // ignore if it's already in myNodeList
@@ -1378,9 +1292,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         // send myfile list to all the nodes in myNodeList
         connectWithNodes();
-
         refreshDataInClient();
-//        this.displayRoutingTable();
         this.status = "1";
     }
 
@@ -1443,20 +1355,26 @@ public class ClientFrame extends javax.swing.JFrame {
         //0056 SEROK American 1 10.10.13.152 3 1 American Pickers  
 
         // Ignore late results..
-        System.out.println(message);
         String[] SR = message.split(" ");
         String MS = "";
         for (int i = 1; i < 6; i++) {
             MS += SR[i] + " ";
         }
-        System.out.println(MS);
         if (mySearchResult.contains(MS)) {
             return;
         } else {
             mySearchResult.add(MS);
         }
+        System.out.println("Message Recieved : " + message);
 
         String[] split = message.split(" ", 4);
+
+        // erformance results
+        writer.println("return message:\t" + message);
+        writer.println("hops taken:\t" + SR[6]);
+        long timeTaken = new Timestamp(System.currentTimeMillis()).getTime() - searchStart;
+        writer.println("timeTaken:\t" + timeTaken + "\n");
+        writer.flush();
 
         String filename = split[2];
         filename = filename.replace('_', ' ');
@@ -1513,11 +1431,10 @@ public class ClientFrame extends javax.swing.JFrame {
 
         this.clearTable(this.nodesTableModel);
 
-        String[] rowData = new String[]{"Bucket " + this.myBucketId, ""};
-        for (int i = 0; i < this.myNodeList.size(); i++) {
-            rowData[1] += (this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort() + "  ");
+        this.addRowToTable(this.nodesTableModel, new String[]{"Bucket " + this.myBucketId, this.myNodeList.get(0).getIp() + ":" + this.myNodeList.get(0).getPort()});
+        for (int i = 1; i < this.myNodeList.size(); i++) {
+            this.addRowToTable(this.nodesTableModel, new String[]{"", this.myNodeList.get(i).getIp() + ":" + this.myNodeList.get(i).getPort()});
         }
-        this.addRowToTable(this.nodesTableModel, rowData);
 
         for (int key : this.bucketTable.keySet()) {
             if (key != this.myBucketId) {
