@@ -62,6 +62,11 @@ public class ClientFrame extends javax.swing.JFrame {
 
     private long searchStart;
 
+    private int numberOfMessagesStarted;
+    private int numberOfMessagesReplied;
+    private int numberOfMessagesTransported;
+    private int numberOfOKMessagesReceived;
+
     /**
      * Creates new form ClientFrame
      */
@@ -119,6 +124,12 @@ public class ClientFrame extends javax.swing.JFrame {
 
         searchFilesResultListModel = new DefaultListModel<>();
         searchFilesResultList.setModel(searchFilesResultListModel);
+    
+        numberOfMessagesReplied=0;
+        numberOfMessagesStarted=0;
+        numberOfMessagesTransported=0;
+        numberOfOKMessagesReceived=0;
+        
     }
 
     /**
@@ -471,13 +482,14 @@ public class ClientFrame extends javax.swing.JFrame {
                 System.out.println("Initialize Search for: " + searchString);
 
                 searchFilesResultListModel.removeAllElements();
-
+                numberOfMessagesStarted++;
                 initializeSearch(searchString);
             } catch (IOException ex) {
                 Logger.getLogger(ClientFrame.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
+        
+        
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void filenameTextActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_filenameTextActionPerformed
@@ -617,7 +629,7 @@ public class ClientFrame extends javax.swing.JFrame {
         int res = JOptionPane.showConfirmDialog(this, "Leave the Bootstrap Server?", "Confirm", JOptionPane.YES_NO_OPTION);
 
         if (res == JOptionPane.YES_OPTION) {
-
+            numberOfMessagesStarted++;
             String message = "UNREG " + this.getIp() + " " + this.getPort() + " " + this.getUserName();
             message = String.format("%04d", message.length() + 5) + " " + message;
 
@@ -633,7 +645,6 @@ public class ClientFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_leaveButtonActionPerformed
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshButtonActionPerformed
-
         refreshDataInClient();
     }//GEN-LAST:event_refreshButtonActionPerformed
 
@@ -676,6 +687,7 @@ public class ClientFrame extends javax.swing.JFrame {
         Node newNode = new Node(ip, Integer.parseInt(port));
         int bucketId = Math.abs((ip + ":" + port).hashCode()) % k;
         bucketTable.put(bucketId, newNode);
+        numberOfMessagesStarted++;
         if (bucketId == this.myBucketId) {
             // request myNodeList from that node 
             this.findMyNodeListFromNode(newNode);
@@ -691,7 +703,7 @@ public class ClientFrame extends javax.swing.JFrame {
         if (!arr[1].equals("REGOK")) {
             return;
         }
-
+        numberOfOKMessagesReceived++;    
         this.setVisible(true);
         switch (arr[2]) {
             case "0":
@@ -712,6 +724,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 for (int i = 0; i < k; i++) {
                     if (!bucketTable.containsKey(i)) {
                         findNodeFromBucket(i);
+                        numberOfMessagesStarted++;
                     }
                 }
                 // time out to complete receiving replies for findNodeFromBucket
@@ -749,7 +762,7 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void findMyNodeListFromNode(Node node) throws UnknownHostException, IOException {
-
+        
         //FNL: Find Node List
         String message = "FNL" + " " + this.ip + ":" + Integer.toString(this.port);
         message = String.format("%04d", message.length() + 5) + " " + message;
@@ -779,7 +792,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
         String message = "CWN " + this.ip + ":" + Integer.toString(this.port) + FD + " " + BL;
         message = String.format("%04d", message.length() + 5) + " " + message;
-
+        numberOfMessagesStarted=numberOfMessagesStarted+myNodeList.size();
         multicast(message, myNodeList);
     }
 
@@ -853,7 +866,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public synchronized void handleHeartBeatResponse(String message) {
         //length HEARTBEATOK IP_address port_no
-
+        numberOfOKMessagesReceived++;
         // Identify the node that sent this heartBeat Reply
         ArrayList<Node> temNodeList = new ArrayList<>();
         String[] splitMessage = message.split(" ");
@@ -885,6 +898,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void sendHeartBeatReply(String message) throws IOException {
         // Setup HeartBeat message
+        numberOfMessagesReplied++;
         String newMessage = "HEARTBEATOK " + this.getIp() + " " + this.getPort();
         newMessage = String.format("%04d", newMessage.length() + 5) + " " + newMessage;
 
@@ -920,6 +934,7 @@ public class ClientFrame extends javax.swing.JFrame {
         } else {
             message = "FBMOK " + bucketId + " null null";
         }
+        numberOfMessagesReplied++;
         message = String.format("%04d", message.length() + 5) + " " + message;
         unicast(message, fromNode);
     }
@@ -932,6 +947,7 @@ public class ClientFrame extends javax.swing.JFrame {
         Node bucket_node = new Node(split_msg[3], Integer.valueOf(split_msg[4]));
         this.bucketTable.put(Integer.valueOf(split_msg[2]), bucket_node);
         // Node is still initializing and the returned node is a node from my bucket
+        numberOfMessagesTransported++;
         if (split_msg[2].equals(Integer.toString(this.myBucketId))) {
             // request myNodeList from that node
             this.findMyNodeListFromNode(bucket_node);
@@ -961,6 +977,7 @@ public class ClientFrame extends javax.swing.JFrame {
         Set<Integer> keySet = bucketTable.keySet();
         for (int i = 0; i < this.k; i++) {
             if (!keySet.contains(i)) {
+                numberOfMessagesStarted++;
                 this.findNodeFromBucket(i);
             }
         }
@@ -1014,11 +1031,20 @@ public class ClientFrame extends javax.swing.JFrame {
 //                System.out.println("Diff in time       : " + (new Timestamp(System.currentTimeMillis()).getTime() - neighbour.getTimeStamp()) + "\n");
                 bucketTable.remove(key);
                 refreshDataInClient();
+                numberOfMessagesStarted++;
                 this.findNodeFromBucket(key);
             }
         }
         refreshDataInClient();
 
+        writer.println("Number of Messages replied:"+numberOfMessagesReplied);
+        writer.println("Number of Messages started:"+numberOfMessagesStarted);
+        writer.println("Number of OK Messages received:"+numberOfOKMessagesReceived);
+        writer.println("Number of Messages transported:"+numberOfMessagesTransported);
+        writer.println("Size of My Node List"+myNodeList.size());
+        writer.println("Size of Bucket table"+bucketTable.size());
+        writer.println();
+        writer.flush();
     }
 
     public void findNodeFromBucket(int bucketId) throws UnknownHostException, IOException {
@@ -1027,12 +1053,14 @@ public class ClientFrame extends javax.swing.JFrame {
         message = String.format("%04d", message.length() + 5) + " " + message;
 
         // request from available my nodes
+        numberOfMessagesTransported=numberOfMessagesTransported+myNodeList.size();
         multicast(message, myNodeList);
 
         // request from nodes from other buckets
         for (int i = 0; i < k; i++) {
             if (this.bucketTable.containsKey(i) && i != this.myBucketId) {
                 unicast(message, this.bucketTable.get(i));
+                
             }
         }
     }
@@ -1050,16 +1078,18 @@ public class ClientFrame extends javax.swing.JFrame {
 
         file_name = file_name.replace(' ', '_');
         mySearchResult.clear();
-
         String net_message = "SER " + this.getIp() + " " + this.getPort() + " " + file_name + " 0";
         net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
         searchFiles(net_message);
     }
 
     public void searchFiles(String message) throws UnknownHostException, IOException {
-        // Record log
-        writer.println("SEARCH QUERY received:\t" + message);
-          
+        writer.println("Number of Messages replied:"+numberOfMessagesReplied);
+        writer.println("Number of Messages started:"+numberOfMessagesStarted);
+        writer.println("Number of OK Messages received:"+numberOfOKMessagesReceived);
+        writer.println("Number of Messages transported:"+numberOfMessagesTransported);
+        writer.flush();
+        
         //length SER IP port file_name hops
         String[] split = message.split(" ");
         String file_name = split[4];
@@ -1098,6 +1128,7 @@ public class ClientFrame extends javax.swing.JFrame {
             }
         }
         if (results.size() > 0) {
+            numberOfMessagesReplied++;
             String ret_message = "SEROK " + file_name + " " + results.size() + " " + this.getIp() + " " + this.getPort() + " " + (hop_count++) + " " + result_string;
             ret_message = String.format("%04d", ret_message.length() + 5) + " " + ret_message;
             unicast(ret_message, new Node(source_ip, source_port));
@@ -1123,6 +1154,7 @@ public class ClientFrame extends javax.swing.JFrame {
                     }
 
                     //message to spread
+                    numberOfMessagesTransported=numberOfMessagesTransported+nodelist.size();
                     String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
                     net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
 
@@ -1145,6 +1177,7 @@ public class ClientFrame extends javax.swing.JFrame {
                 }
 
                 //message to spread
+                numberOfMessagesTransported=numberOfMessagesTransported+temValues.size();
                 String net_message = "SER " + source_ip + " " + source_port + " " + file_name + " " + (++hop_count);
                 net_message = String.format("%04d", net_message.length() + 5) + " " + net_message;
                 multicast(net_message, temValues);
@@ -1154,6 +1187,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     // handle unreg ok from bootrap server
     public void handleLeaveOk(String message) throws UnknownHostException, IOException {
+        numberOfOKMessagesReceived++;
         int messageType = Integer.parseInt(message.split(" ")[2]);
         if (messageType == 0) {
             String sendMeessage = "LEAVE " + this.getIp() + " " + this.getPort();
@@ -1167,6 +1201,7 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void handleLeave(String message) throws UnknownHostException, IOException {
+        numberOfOKMessagesReceived++;
         String[] splitMesseageList = message.split(" ");
         String ip = splitMesseageList[2];
         int port = Integer.parseInt(splitMesseageList[3]);
@@ -1201,6 +1236,7 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void findMyNodeListFromNodeReply(Node fromNode) throws UnknownHostException, IOException {
+        numberOfOKMessagesReceived++;
         String message = "FNLOK ";
 
         // make myNodeList string
@@ -1356,7 +1392,7 @@ public class ClientFrame extends javax.swing.JFrame {
 
     public void handleSearchFilesResponse(String message) {
         //0056 SEROK American 1 10.10.13.152 3 1 American Pickers  
-
+        numberOfOKMessagesReceived++;
         // Ignore late results..
         String[] SR = message.split(" ");
         String MS = "";
@@ -1377,6 +1413,10 @@ public class ClientFrame extends javax.swing.JFrame {
         writer.println("hops taken:\t" + SR[6]);
         long timeTaken = new Timestamp(System.currentTimeMillis()).getTime() - searchStart;
         writer.println("timeTaken:\t" + timeTaken + "\n");
+        writer.println("Number of Messages replied:"+numberOfMessagesReplied);
+        writer.println("Number of Messages started:"+numberOfMessagesStarted);
+        writer.println("Number of OK Messages received:"+numberOfOKMessagesReceived);
+        writer.println("Number of Messages transported:"+numberOfMessagesTransported);
         writer.flush();
 
         String filename = split[2];
