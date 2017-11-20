@@ -1057,6 +1057,9 @@ public class ClientFrame extends javax.swing.JFrame {
     }
 
     public void searchFiles(String message) throws UnknownHostException, IOException {
+        // Record log
+        writer.println("SEARCH QUERY received:\t" + message);
+          
         //length SER IP port file_name hops
         String[] split = message.split(" ");
         String file_name = split[4];
